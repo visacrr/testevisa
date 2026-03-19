@@ -1,0 +1,3459 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1280">
+<title>VISA Careiro — Cadastro Sanitário</title>
+
+<!-- ── Ícone personalizado: aba do navegador, atalho e tela inicial ─────── -->
+<link rel="icon"             type="image/jpeg" href="imag01.jpeg">
+<link rel="shortcut icon"    type="image/jpeg" href="imag01.jpeg">
+<link rel="apple-touch-icon"                   href="imag01.jpeg">
+<meta name="theme-color"     content="#f48aab">
+<meta name="mobile-web-app-capable"            content="yes">
+<meta name="apple-mobile-web-app-capable"      content="yes">
+<meta name="apple-mobile-web-app-title"        content="VISA Careiro">
+<link rel="manifest" id="__manifest__">
+<script>
+  // Gera manifesto PWA inline para que o ícone apareça ao adicionar como atalho
+  (function(){
+    const m = {
+      name: "VISA Careiro — Cadastro Sanitário",
+      short_name: "VISA Careiro",
+      start_url: "./",
+      display: "standalone",
+      background_color: "#f5e8ef",
+      theme_color: "#f48aab",
+      icons: [
+        { src: "imag01.jpeg", sizes: "192x192", type: "image/jpeg", purpose: "any" },
+        { src: "imag01.jpeg", sizes: "512x512", type: "image/jpeg", purpose: "any" },
+        { src: "imag01.jpeg", sizes: "192x192", type: "image/jpeg", purpose: "maskable" },
+        { src: "imag01.jpeg", sizes: "512x512", type: "image/jpeg", purpose: "maskable" }
+      ]
+    };
+    const blob = new Blob([JSON.stringify(m)], { type: 'application/manifest+json' });
+    document.getElementById('__manifest__').href = URL.createObjectURL(blob);
+  })();
+</script>
+<!-- ──────────────────────────────────────────────────────────────────────── -->
+
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<!-- ── Firebase SDK ──────────────────────────────────────────────────── -->
+<script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+<!-- ── Módulo central de configuração Firebase (credenciais únicas) ──── -->
+<script src="firebase-config.js"></script>
+<style>
+:root {
+  --rosa:       #f9b8c8;
+  --rosa-dark:  #f48aab;
+  --rosa-soft:  #fde8ee;
+  --amarelo:    #fde68a;
+  --amarelo-dark:#f6c341;
+  --amarelo-soft:#fffbeb;
+  --bg:         #f5e8ef;
+  --surface:    rgba(255,255,255,0.72);
+  --surface2:   rgba(253,244,246,0.8);
+  --text:       #2d1b24;
+  --text-light: #7a4f61;
+  --text-muted: #b08090;
+  --border:     rgba(244,138,171,0.25);
+  --border-solid:#f5c6d4;
+  --success:    #6bcb8b;
+  --success-bg: #e8f8ee;
+  --warning:    #f6a623;
+  --warning-bg: #fff4e0;
+  --danger:     #e05a6b;
+  --danger-bg:  #fdeef0;
+  --glass-blur: blur(18px);
+  --shadow:     0 4px 24px rgba(244,138,171,0.13);
+  --shadow-hover:0 8px 36px rgba(244,138,171,0.24);
+  --radius:     16px;
+  --radius-sm:  10px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  background-image:
+    radial-gradient(circle at 20% 20%, rgba(249,184,200,0.45) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(253,230,138,0.35) 0%, transparent 50%),
+    radial-gradient(circle at 60% 10%, rgba(244,138,171,0.2) 0%, transparent 40%);
+  background-attachment: fixed;
+  color: var(--text);
+  min-height: 100vh;
+  min-width: 1280px;
+  overflow-x: auto;
+}
+
+/* ─── SIDEBAR ─────────────────────────────────────────── */
+.sidebar {
+  position: fixed; top: 0; left: 0; width: 260px; height: 100vh;
+  background: rgba(255,248,249,0.82);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-right: 1.5px solid rgba(255,255,255,0.6);
+  display: flex; flex-direction: column; z-index: 200;
+  transition: transform .3s cubic-bezier(.4,0,.2,1);
+  box-shadow: 4px 0 30px rgba(244,138,171,0.08);
+}
+.sidebar-logo {
+  padding: 28px 22px 18px;
+  border-bottom: 1px solid var(--border);
+}
+.sidebar-logo .logo-icon {
+  width: 46px; height: 46px; border-radius: 14px;
+  background: var(--rosa-dark);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; margin-bottom: 10px;
+  box-shadow: 0 4px 16px rgba(244,138,171,0.4);
+  overflow: hidden;
+}
+.sidebar-logo .logo-icon img {
+  width: 100%; height: 100%; object-fit: cover; border-radius: 14px;
+}
+.sidebar-logo h1 { font-family: 'Playfair Display', serif; font-size: 17px; line-height: 1.2; color: var(--text); }
+.sidebar-logo p  { font-size: 11px; color: var(--text-light); margin-top: 2px; font-weight: 500; letter-spacing: .5px; }
+
+.nav-section { padding: 10px 14px 4px; font-size: 10px; font-weight: 700; color: var(--text-muted); letter-spacing: 1.2px; text-transform: uppercase; }
+
+.nav-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 11px 18px; margin: 2px 10px; border-radius: var(--radius-sm);
+  font-size: 14px; font-weight: 500; color: var(--text-light);
+  cursor: pointer; transition: all .2s; border: none; background: none;
+  width: calc(100% - 20px); text-align: left;
+}
+.nav-item:hover { background: rgba(244,138,171,0.18); color: var(--text); }
+.nav-item.active {
+  background: var(--rosa-dark);
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 4px 14px rgba(244,138,171,0.35);
+}
+.nav-item .icon { font-size: 18px; width: 24px; text-align: center; }
+
+.sidebar-footer { margin-top: auto; padding: 16px 18px; border-top: 1px solid var(--border); font-size: 11px; color: var(--text-muted); }
+
+/* ─── MAIN ────────────────────────────────────────────── */
+.main { margin-left: 260px; min-height: 100vh; }
+.topbar {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(255,248,249,0.85);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-bottom: 1.5px solid rgba(255,255,255,0.55);
+  padding: 14px 28px; display: flex; align-items: center; gap: 14px;
+  box-shadow: 0 2px 16px rgba(244,138,171,0.07);
+}
+.hamburger { display: none !important; font-size: 22px; cursor: pointer; background: none; border: none; color: var(--text); }
+.topbar-title { font-family: 'Playfair Display', serif; font-size: 19px; font-weight: 700; flex: 1; }
+.topbar-stats { display: flex; gap: 14px; }
+.topbar-badge {
+  background: rgba(255,255,255,0.7);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--border-solid);
+  border-radius: 50px; padding: 5px 14px; font-size: 12px; font-weight: 600; color: var(--text-light);
+  white-space: nowrap;
+}
+.topbar-badge span { color: var(--rosa-dark); font-weight: 700; }
+
+.content { padding: 28px; }
+
+/* ─── SEARCH BAR ──────────────────────────────────────── */
+.search-container {
+  background: rgba(255,255,255,0.75);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1.5px solid rgba(255,255,255,0.6);
+  border-radius: 50px;
+  display: flex; align-items: center; gap: 10px; padding: 10px 20px;
+  transition: border-color .2s, box-shadow .2s;
+  box-shadow: var(--shadow);
+}
+.search-container:focus-within { border-color: var(--rosa-dark); box-shadow: 0 0 0 4px rgba(244,138,171,.15); }
+.search-icon { font-size: 18px; color: var(--text-muted); }
+.search-input { flex: 1; border: none; outline: none; font-size: 15px; font-family: 'DM Sans', sans-serif; background: transparent; color: var(--text); }
+.search-input::placeholder { color: var(--text-muted); }
+.search-clear { background: none; border: none; font-size: 18px; cursor: pointer; color: var(--text-muted); display: none; }
+
+/* ─── FILTERS ─────────────────────────────────────────── */
+.filters-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+.filter-chip {
+  border: 1.5px solid var(--border-solid); border-radius: 50px;
+  padding: 6px 16px; font-size: 13px; font-weight: 500; color: var(--text-light);
+  cursor: pointer; background: rgba(255,255,255,0.7); transition: all .2s; white-space: nowrap;
+  backdrop-filter: blur(6px);
+}
+.filter-chip:hover { border-color: var(--rosa-dark); color: var(--text); background: var(--rosa-soft); }
+.filter-chip.active {
+  background: var(--rosa-dark);
+  border-color: var(--rosa-dark);
+  color: #fff;
+  font-weight: 700;
+  box-shadow: 0 3px 12px rgba(244,138,171,.3);
+}
+.filter-select {
+  border: 1.5px solid var(--border-solid); border-radius: 50px; padding: 7px 16px;
+  font-size: 13px; font-family: 'DM Sans', sans-serif; color: var(--text-light);
+  cursor: pointer; background: rgba(255,255,255,0.7); outline: none; transition: all .2s;
+  appearance: none; padding-right: 28px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23b08090' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 12px center;
+}
+.filter-select:focus { border-color: var(--rosa-dark); }
+
+/* ─── STATS CARDS — GLASS ─────────────────────────────── */
+.stats-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 18px; margin: 24px 0; }
+.stat-card {
+  background: rgba(255,255,255,0.6);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1.5px solid rgba(255,255,255,0.55);
+  border-radius: var(--radius);
+  padding: 20px; position: relative; overflow: hidden;
+  transition: box-shadow .25s, transform .2s;
+  box-shadow: 0 4px 24px rgba(244,138,171,0.10), inset 0 1px 0 rgba(255,255,255,0.8);
+}
+.stat-card:hover {
+  box-shadow: 0 10px 40px rgba(244,138,171,0.22), inset 0 1px 0 rgba(255,255,255,0.9);
+  transform: translateY(-2px);
+}
+.stat-card::before {
+  content: ''; position: absolute; top: -24px; right: -24px; width: 90px; height: 90px;
+  border-radius: 50%; opacity: .2;
+}
+.stat-card.rosa::before   { background: var(--rosa-dark); }
+.stat-card.amarelo::before{ background: var(--amarelo-dark); }
+.stat-card.verde::before  { background: var(--success); }
+.stat-card.danger::before { background: var(--danger); }
+.stat-label  { font-size: 12px; font-weight: 600; color: var(--text-muted); letter-spacing: .5px; text-transform: uppercase; }
+.stat-value  { font-family: 'Playfair Display', serif; font-size: 36px; font-weight: 900; margin: 6px 0 4px; }
+.stat-card.rosa    .stat-value { color: var(--rosa-dark); }
+.stat-card.amarelo .stat-value { color: var(--amarelo-dark); }
+.stat-card.verde   .stat-value { color: var(--success); }
+.stat-card.danger  .stat-value { color: var(--danger); }
+.stat-sub   { font-size: 12px; color: var(--text-muted); }
+.stat-icon  { position: absolute; top: 18px; right: 18px; font-size: 28px; opacity: .55; }
+
+/* ─── GLASS CARD (generic) ────────────────────────────── */
+.glass-card {
+  background: rgba(255,255,255,0.62);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1.5px solid rgba(255,255,255,0.55);
+  border-radius: var(--radius);
+  box-shadow: 0 4px 28px rgba(244,138,171,0.10), inset 0 1px 0 rgba(255,255,255,0.75);
+}
+
+/* ─── TABLE ───────────────────────────────────────────── */
+.table-section {
+  background: rgba(255,255,255,0.65);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-radius: var(--radius);
+  border: 1.5px solid rgba(255,255,255,0.55);
+  overflow: hidden;
+  box-shadow: 0 4px 28px rgba(244,138,171,0.10), inset 0 1px 0 rgba(255,255,255,0.8);
+}
+.table-header {
+  padding: 18px 22px; border-bottom: 1.5px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  background: rgba(255,255,255,0.4);
+}
+.table-header h2 { font-family: 'Playfair Display', serif; font-size: 18px; }
+.count-badge {
+  background: rgba(249,184,200,0.4);
+  color: var(--rosa-dark); font-size: 12px; font-weight: 700;
+  padding: 4px 12px; border-radius: 50px; border: 1px solid var(--border-solid);
+}
+.btn {
+  padding: 8px 18px; border-radius: 50px; font-size: 13px; font-weight: 600;
+  font-family: 'DM Sans', sans-serif; border: none; cursor: pointer; transition: all .2s;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.btn-primary { background: var(--rosa-dark); color: #fff; box-shadow: 0 3px 12px rgba(244,138,171,.35); }
+.btn-primary:hover { background: #e8709a; box-shadow: 0 6px 20px rgba(244,138,171,.45); transform: translateY(-1px); }
+.btn-amarelo { background: var(--amarelo-dark); color: var(--text); box-shadow: 0 3px 12px rgba(246,195,65,.35); }
+.btn-amarelo:hover { background: #e8b52e; box-shadow: 0 6px 20px rgba(246,195,65,.4); transform: translateY(-1px); }
+.btn-ghost {
+  background: rgba(255,255,255,0.7); color: var(--text-light);
+  border: 1.5px solid var(--border-solid); backdrop-filter: blur(6px);
+}
+.btn-ghost:hover { background: var(--rosa-soft); color: var(--text); border-color: var(--rosa-dark); }
+.btn-sm { padding: 5px 12px; font-size: 12px; }
+.btn-danger { background: var(--danger-bg); color: var(--danger); border: 1.5px solid #f9c0c7; }
+.btn-danger:hover { background: var(--danger); color: white; }
+.btn-success { background: var(--success-bg); color: #2d7a4f; border: 1.5px solid #b0e6c4; }
+.btn-success:hover { background: var(--success); color: white; }
+.btn-print { background: var(--amarelo-dark); color: var(--text); box-shadow: 0 3px 12px rgba(246,195,65,.3); }
+.btn-print:hover { background: #e8b52e; transform: translateY(-1px); }
+
+.table-scroll { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+thead tr { background: rgba(249,184,200,0.18); }
+th { padding: 12px 16px; font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .8px; text-align: left; white-space: nowrap; }
+td { padding: 12px 16px; font-size: 13px; border-top: 1px solid rgba(250,232,240,0.9); vertical-align: middle; }
+tr:hover td { background: rgba(249,184,200,0.12); }
+.td-nome  { font-weight: 600; color: var(--text); max-width: 180px; }
+.td-razao { color: var(--text-light); font-size: 12px; max-width: 160px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.td-end   { color: var(--text-light); font-size: 12px; max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.badge { display: inline-block; padding: 3px 10px; border-radius: 50px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+.badge-baixo     { background: var(--success-bg); color: #2a6e47; }
+.badge-alto      { background: var(--danger-bg); color: var(--danger); }
+.badge-sem       { background: #f5f0f2; color: var(--text-muted); }
+.badge-bairro    { background: rgba(253,230,138,0.55); color: #7a5c00; border: 1px solid var(--amarelo-dark); }
+.badge-cat       { background: rgba(249,184,200,0.45); color: #8a2848; border: 1px solid var(--border-solid); }
+.badge-fiscalizado { background: var(--success-bg); color: #2a6e47; }
+.badge-pendente  { background: var(--warning-bg); color: #7a4e00; }
+.badge-irregular { background: var(--danger-bg); color: var(--danger); }
+
+.td-actions { display: flex; gap: 6px; flex-wrap: nowrap; }
+.action-btn {
+  width: 30px; height: 30px; border-radius: 8px; border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; font-size: 14px; transition: all .15s;
+}
+.action-btn.view    { background: rgba(253,230,138,0.5); color: #9a7000; }
+.action-btn.view:hover    { background: var(--amarelo-dark); color: var(--text); }
+.action-btn.inspect { background: rgba(249,184,200,0.5); color: var(--rosa-dark); }
+.action-btn.inspect:hover { background: var(--rosa-dark); color: white; }
+.action-btn.edit    { background: #e8f4ff; color: #3a7dc9; }
+.action-btn.edit:hover    { background: #3a7dc9; color: white; }
+.action-btn.del     { background: var(--danger-bg); color: var(--danger); }
+.action-btn.del:hover     { background: var(--danger); color: white; }
+.action-btn.deactivate { background: rgba(255,244,224,0.8); color: #7a4e00; }
+.action-btn.deactivate:hover { background: var(--warning); color: white; }
+.action-btn.activate { background: var(--success-bg); color: #2d7a4f; }
+.action-btn.activate:hover { background: var(--success); color: white; }
+.badge-ativo   { background: var(--success-bg); color: #2a6e47; }
+.badge-inativo { background: var(--danger-bg);  color: var(--danger); }
+
+.pagination { padding: 16px 22px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+.pagination-info { font-size: 13px; color: var(--text-muted); }
+.pagination-btns { display: flex; gap: 6px; }
+.page-btn {
+  width: 34px; height: 34px; border-radius: 8px;
+  border: 1.5px solid var(--border-solid);
+  background: rgba(255,255,255,0.6); cursor: pointer; font-size: 13px; font-weight: 600; transition: all .15s;
+}
+.page-btn:hover { background: var(--rosa-soft); border-color: var(--rosa-dark); }
+.page-btn.active { background: var(--rosa-dark); border-color: var(--rosa-dark); color: #fff; }
+.page-btn:disabled { opacity: .4; cursor: not-allowed; }
+
+/* ─── MODAL ───────────────────────────────────────────── */
+.overlay {
+  position: fixed; inset: 0;
+  background: rgba(45,27,36,.35);
+  backdrop-filter: blur(6px);
+  z-index: 1000; display: none; align-items: center; justify-content: center; padding: 20px;
+}
+.overlay.open { display: flex; }
+.modal {
+  background: rgba(255,255,255,0.88);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1.5px solid rgba(255,255,255,0.7);
+  border-radius: var(--radius); max-width: 600px; width: 100%; max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 24px 80px rgba(45,27,36,.2), inset 0 1px 0 rgba(255,255,255,0.9);
+  animation: modalIn .25s ease;
+}
+@keyframes modalIn { from { opacity:0; transform: scale(.95) translateY(20px); } to { opacity:1; transform: none; } }
+.modal-header {
+  padding: 22px 24px 16px; border-bottom: 1.5px solid var(--border);
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+  background: rgba(249,184,200,0.18);
+}
+.modal-header h2 { font-family: 'Playfair Display', serif; font-size: 20px; line-height: 1.2; }
+.modal-close { background: none; border: none; font-size: 22px; cursor: pointer; color: var(--text-muted); line-height: 1; transition: color .15s; }
+.modal-close:hover { color: var(--danger); }
+.modal-body { padding: 22px 24px; }
+.info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.info-item label { display: block; font-size: 10px; font-weight: 700; color: var(--text-muted); letter-spacing: .8px; text-transform: uppercase; margin-bottom: 4px; }
+.info-item p { font-size: 14px; color: var(--text); font-weight: 500; }
+.info-item.full { grid-column: 1/-1; }
+.divider { height: 1.5px; background: rgba(244,138,171,0.2); margin: 18px 0; border: none; }
+
+/* Inspection form */
+.inspect-form { display: grid; gap: 14px; }
+.form-group label { display: block; font-size: 12px; font-weight: 700; color: var(--text-muted); letter-spacing: .5px; text-transform: uppercase; margin-bottom: 6px; }
+.form-input, .form-select, .form-textarea {
+  width: 100%; padding: 10px 14px; border: 1.5px solid var(--border-solid); border-radius: var(--radius-sm);
+  font-size: 14px; font-family: 'DM Sans', sans-serif; color: var(--text);
+  background: rgba(255,255,255,0.75); outline: none; transition: border-color .2s;
+}
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+  border-color: var(--rosa-dark);
+  box-shadow: 0 0 0 3px rgba(244,138,171,.15);
+  background: rgba(255,255,255,0.9);
+}
+.form-textarea { min-height: 90px; resize: vertical; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+/* History */
+.history-item { background: rgba(253,244,246,0.7); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px; margin-bottom: 10px; position: relative; }
+.history-item::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; border-radius: 4px 0 0 4px; }
+.history-item.fiscalizado::before { background: var(--success); }
+.history-item.pendente::before    { background: var(--warning); }
+.history-item.irregular::before   { background: var(--danger); }
+.history-date  { font-size: 11px; color: var(--text-muted); font-weight: 600; }
+.history-status{ float: right; }
+.history-agent { font-size: 13px; font-weight: 600; margin-top: 4px; }
+.history-obs   { font-size: 12px; color: var(--text-light); margin-top: 4px; }
+
+/* ─── DASHBOARD ──────────────────────────────────────── */
+.dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 24px; }
+.dash-card {
+  background: rgba(255,255,255,0.62);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1.5px solid rgba(255,255,255,0.55);
+  border-radius: var(--radius); padding: 22px;
+  box-shadow: 0 4px 28px rgba(244,138,171,0.10), inset 0 1px 0 rgba(255,255,255,0.8);
+  transition: box-shadow .2s, transform .2s;
+}
+.dash-card:hover {
+  box-shadow: 0 8px 36px rgba(244,138,171,0.18), inset 0 1px 0 rgba(255,255,255,0.9);
+  transform: translateY(-1px);
+}
+.dash-card h3 { font-family: 'Playfair Display', serif; font-size: 16px; margin-bottom: 16px; }
+.bar-item { margin-bottom: 12px; }
+.bar-label { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 5px; }
+.bar-label span:last-child { font-weight: 700; color: var(--rosa-dark); }
+.bar-track { height: 8px; background: rgba(249,184,200,0.3); border-radius: 50px; overflow: hidden; }
+.bar-fill  { height: 100%; border-radius: 50px; background: var(--rosa-dark); transition: width .5s ease; }
+.pie-legend { display: flex; flex-direction: column; gap: 8px; }
+.pie-row    { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+.pie-dot    { width: 14px; height: 14px; border-radius: 4px; flex-shrink: 0; }
+.pie-name   { flex: 1; }
+.pie-val    { font-weight: 700; }
+
+/* ─── CONFIGURAÇÕES ──────────────────────────────────── */
+.config-sections { display: grid; gap: 20px; }
+.config-card {
+  background: rgba(255,255,255,0.62);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1.5px solid rgba(255,255,255,0.55);
+  border-radius: var(--radius); padding: 24px;
+  box-shadow: 0 4px 28px rgba(244,138,171,0.10), inset 0 1px 0 rgba(255,255,255,0.8);
+}
+.config-card h3 { font-family: 'Playfair Display', serif; font-size: 18px; margin-bottom: 6px; }
+.config-card p  { font-size: 13px; color: var(--text-muted); margin-bottom: 18px; }
+.switch-row   { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-top: 1px solid var(--border); }
+.switch-label { font-size: 14px; font-weight: 500; }
+.switch-sub   { font-size: 12px; color: var(--text-muted); }
+.switch { position: relative; display: inline-block; width: 42px; height: 24px; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider { position: absolute; cursor: pointer; inset: 0; background: var(--border-solid); border-radius: 24px; transition: .3s; }
+.slider::before { content: ''; position: absolute; height: 18px; width: 18px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: .3s; }
+input:checked + .slider { background: var(--rosa-dark); }
+input:checked + .slider::before { transform: translateX(18px); }
+.agent-list { display: grid; gap: 10px; }
+.agent-item { background: rgba(253,244,246,0.7); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 16px; display: flex; align-items: center; gap: 12px; }
+.agent-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--rosa-dark); display: flex; align-items: center; justify-content: center; font-size: 16px; }
+.agent-name   { font-weight: 600; font-size: 14px; }
+.agent-role   { font-size: 12px; color: var(--text-muted); }
+.agent-actions{ margin-left: auto; display: flex; gap: 6px; }
+.input-group  { display: flex; gap: 10px; }
+.input-group .form-input { flex: 1; }
+
+/* ─── MOBILE (desabilitado — interface somente desktop) ── */
+.mobile-overlay { display: none !important; }
+
+/* Stats grid sempre 4 colunas no desktop */
+@media (min-width: 1280px) {
+  .stats-grid { grid-template-columns: repeat(5, 1fr); }
+  .dash-grid  { grid-template-columns: 1fr 1fr; }
+}
+
+/* ─── PAGES ──────────────────────────────────────────── */
+.page { display: none; }
+.page.active { display: block; }
+
+/* ─── EMPTY STATE ────────────────────────────────────── */
+.empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+.empty-state .icon { font-size: 52px; margin-bottom: 14px; }
+.empty-state h3 { font-size: 18px; font-weight: 600; margin-bottom: 6px; color: var(--text-light); }
+.empty-state p  { font-size: 14px; }
+
+/* ─── TOAST ──────────────────────────────────────────── */
+.toast-container { position: fixed; bottom: 24px; right: 24px; display: flex; flex-direction: column; gap: 10px; z-index: 9999; }
+.toast {
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(12px);
+  border: 1.5px solid rgba(255,255,255,0.6);
+  border-radius: var(--radius-sm);
+  padding: 14px 18px; box-shadow: var(--shadow-hover); display: flex; align-items: center; gap: 10px;
+  font-size: 14px; min-width: 280px; max-width: 380px;
+  animation: slideIn .3s ease; transform-origin: bottom right;
+}
+.toast.success { border-left: 4px solid var(--success); }
+.toast.error   { border-left: 4px solid var(--danger); }
+@keyframes slideIn  { from { opacity:0; transform: translateX(40px); } to { opacity:1; transform: none; } }
+@keyframes slideOut { to   { opacity:0; transform: translateX(40px); } }
+
+/* ─── LOADING ────────────────────────────────────────── */
+.skeleton { background: rgba(249,184,200,0.3); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 6px; }
+@keyframes shimmer { to { background-position: -200% 0; } }
+
+.alert-strip {
+  background: rgba(255,244,224,0.85);
+  backdrop-filter: blur(10px);
+  border: 1.5px solid var(--amarelo-dark);
+  border-radius: var(--radius-sm); padding: 12px 18px; font-size: 13px;
+  display: flex; align-items: center; gap: 10px; margin-bottom: 16px;
+}
+
+/* ─── BAIRROS MANAGEMENT ─────────────────────────────── */
+.bairro-tag {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(253,230,138,0.55); border: 1px solid var(--amarelo-dark);
+  border-radius: 50px; padding: 4px 12px; font-size: 12px; font-weight: 600; color: #7a5c00;
+}
+.bairro-tag button {
+  background: none; border: none; cursor: pointer; color: #a07800; font-size: 14px; line-height: 1; padding: 0;
+}
+.bairro-tag button:hover { color: var(--danger); }
+.bairro-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; min-height: 36px; }
+
+/* ─── PRINT MODAL ────────────────────────────────────── */
+#printPreviewModal.overlay {
+  align-items: stretch;
+  justify-content: stretch;
+  padding: 0;
+}
+#printPreviewModal .modal {
+  max-width: none !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  border-radius: 0 !important;
+  display: flex;
+  flex-direction: column;
+}
+#printPreviewModal .modal-body {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+#printPreviewModal .modal-body > div:last-child {
+  flex: 1;
+  overflow-y: auto;
+}
+#printContent {
+  font-family: 'DM Sans', sans-serif;
+  color: #1a1a2e;
+  padding: 0;
+}
+#printContent .print-header {
+  background: var(--rosa-dark);
+  color: white; padding: 14px 24px;
+  display: flex; align-items: center; justify-content: space-between;
+  border-radius: var(--radius) var(--radius) 0 0;
+  gap: 16px;
+}
+#printContent .print-header h1 { font-family: 'Playfair Display', serif; font-size: 17px; }
+#printContent .print-header .print-meta { font-size: 11px; opacity: .9; text-align: right; white-space: nowrap; }
+#printContent .print-body { padding: 16px 24px; }
+#printContent .print-section-title {
+  font-family: 'Playfair Display', serif; font-size: 15px;
+  border-bottom: 2px solid var(--rosa-dark); padding-bottom: 6px; margin: 20px 0 12px;
+  color: var(--rosa-dark);
+}
+#printContent .print-summary {
+  display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 24px;
+}
+#printContent .print-stat {
+  background: rgba(249,184,200,0.2); border: 1px solid var(--border-solid);
+  border-radius: 10px; padding: 14px; text-align: center;
+}
+#printContent .print-stat .pv { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 900; color: var(--rosa-dark); }
+#printContent .print-stat .pl { font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
+#printContent table { width: 100%; border-collapse: collapse; font-size: 12px; }
+#printContent thead tr { background: var(--rosa-dark); color: white; }
+#printContent th { padding: 9px 10px; text-align: left; font-weight: 700; font-size: 11px; letter-spacing: .5px; text-transform: uppercase; }
+#printContent td { padding: 8px 10px; border-bottom: 1px solid #fae8f0; }
+#printContent tr:nth-child(even) td { background: rgba(249,184,200,0.08); }
+#printContent .print-footer {
+  margin-top: 28px; display: grid; grid-template-columns: 1fr 1fr; gap: 32px;
+  border-top: 2px solid #eee; padding-top: 20px;
+  page-break-inside: avoid; break-inside: avoid;
+}
+#printContent .sign-line { border-top: 1.5px solid #333; margin-top: 40px; padding-top: 6px; font-size: 11px; color: #555; text-align: center; }
+
+@media print {
+  body > *:not(#printWindow) { display: none !important; }
+}
+/* ─── LOGIN OVERLAY ─────────────────────────────────── */
+#loginOverlay {
+  position:fixed; inset:0; background:var(--bg);
+  background-image:
+    radial-gradient(circle at 20% 20%, rgba(249,184,200,.45) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(253,230,138,.35) 0%, transparent 50%);
+  z-index:9999; display:flex; align-items:center; justify-content:center;
+}
+.login-card {
+  background:rgba(255,255,255,.88); backdrop-filter:var(--glass-blur);
+  -webkit-backdrop-filter:var(--glass-blur);
+  border:1.5px solid rgba(255,255,255,.7); border-radius:var(--radius);
+  padding:40px 36px; max-width:420px; width:100%;
+  box-shadow:0 24px 80px rgba(45,27,36,.18);
+}
+.login-logo { text-align:center; margin-bottom:28px; }
+.login-logo .logo-icon {
+  width:60px; height:60px; border-radius:18px; background:var(--rosa-dark);
+  display:flex; align-items:center; justify-content:center; font-size:28px;
+  margin:0 auto 12px; box-shadow:0 6px 20px rgba(244,138,171,.4); overflow:hidden;
+}
+.login-logo .logo-icon img { width:100%; height:100%; object-fit:cover; border-radius:18px; }
+.login-logo h2 { font-family:'Playfair Display',serif; font-size:22px; color:var(--text); }
+.login-logo p  { font-size:12px; color:var(--text-muted); margin-top:4px; }
+.login-field { margin-bottom:16px; }
+.login-field label { display:block; font-size:11px; font-weight:700; color:var(--text-muted); letter-spacing:.6px; text-transform:uppercase; margin-bottom:6px; }
+.login-field input {
+  width:100%; padding:12px 16px; border:1.5px solid var(--border-solid); border-radius:var(--radius-sm);
+  font-size:14px; font-family:'DM Sans',sans-serif; color:var(--text);
+  background:rgba(255,255,255,.8); outline:none; transition:border-color .2s;
+}
+.login-field input:focus { border-color:var(--rosa-dark); box-shadow:0 0 0 3px rgba(244,138,171,.15); }
+.login-err {
+  background:var(--danger-bg); border:1px solid #f9c0c7; color:var(--danger);
+  border-radius:var(--radius-sm); padding:10px 14px; font-size:13px; margin-bottom:14px; display:none;
+}
+.login-btn-full {
+  width:100%; padding:13px; background:var(--rosa-dark); color:#fff;
+  border:none; border-radius:50px; font-size:15px; font-weight:700;
+  font-family:'DM Sans',sans-serif; cursor:pointer; transition:all .2s;
+  box-shadow:0 4px 16px rgba(244,138,171,.4);
+}
+.login-btn-full:hover { background:#e8709a; transform:translateY(-1px); }
+.login-btn-full:disabled { opacity:.6; cursor:not-allowed; transform:none; }
+
+/* ─── USER INFO IN SIDEBAR ──────────────────────────── */
+.sidebar-user {
+  margin:0 10px 4px; padding:10px 12px; border-radius:var(--radius-sm);
+  background:rgba(249,184,200,.18); border:1px solid var(--border);
+  display:flex; align-items:center; gap:10px;
+}
+.sidebar-user-avatar {
+  width:32px; height:32px; border-radius:50%; background:var(--rosa-dark);
+  display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0;
+}
+.sidebar-user-info { overflow:hidden; }
+.sidebar-user-name { font-size:12px; font-weight:700; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.sidebar-user-role { font-size:10px; color:var(--text-muted); font-weight:600; letter-spacing:.4px; text-transform:uppercase; }
+.btn-logout { width:calc(100% - 20px); margin:0 10px 6px; padding:8px; border-radius:var(--radius-sm); background:transparent; border:1.5px solid var(--border-solid); color:var(--text-muted); font-size:12px; font-weight:600; cursor:pointer; transition:all .2s; text-align:left; display:flex; align-items:center; gap:8px; }
+.btn-logout:hover { background:var(--danger-bg); border-color:var(--danger); color:var(--danger); }
+
+/* ─── FISCAL PROFILE CARD ───────────────────────────── */
+.fiscal-profile-card {
+  background:rgba(255,255,255,.62); backdrop-filter:var(--glass-blur);
+  -webkit-backdrop-filter:var(--glass-blur);
+  border:1.5px solid rgba(255,255,255,.55); border-radius:var(--radius);
+  padding:24px; margin-top:28px;
+  box-shadow:0 4px 28px rgba(244,138,171,.10), inset 0 1px 0 rgba(255,255,255,.8);
+}
+.fiscal-profile-card h3 { font-family:'Playfair Display',serif; font-size:18px; margin-bottom:6px; }
+.fiscal-profile-card p  { font-size:13px; color:var(--text-muted); margin-bottom:18px; }
+.profile-info-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:18px; }
+.profile-info-item label { display:block; font-size:10px; font-weight:700; color:var(--text-muted); letter-spacing:.6px; text-transform:uppercase; margin-bottom:3px; }
+.profile-info-item p { font-size:14px; font-weight:500; color:var(--text); }
+
+/* ─── SETUP MODAL ───────────────────────────────────── */
+#modalFiscalSetup .modal { max-width:560px; }
+
+</style>
+</head>
+<body>
+
+<!-- ─── LOGIN OVERLAY ──────────────────────────────── -->
+<div id="loginOverlay">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="logo-icon"><img src="imag01.jpeg" alt="VISA" onerror="this.parentElement.textContent='🏥'"></div>
+      <h2>VISA Careiro</h2>
+      <p>Cadastro Sanitário Municipal — Acesso Restrito</p>
+    </div>
+    <div class="login-err" id="loginErr"></div>
+    <div class="login-field">
+      <label>E-mail</label>
+      <input type="email" id="loginEmail" placeholder="seu@email.com" autocomplete="email">
+    </div>
+    <div class="login-field">
+      <label>Senha</label>
+      <input type="password" id="loginSenha" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="login-btn-full" id="loginBtn" onclick="doLogin()">Entrar</button>
+    <div style="text-align:center;margin-top:16px;font-size:11px;color:var(--text-muted)">VISA — Vigilância Sanitária de Careiro, AM</div>
+  </div>
+</div>
+
+<!-- Loading Overlay -->
+<div id="loadingOverlay" style="display:none;position:fixed;inset:0;background:rgba(245,232,239,.96);z-index:9000;flex-direction:column;align-items:center;justify-content:center;gap:16px">
+  <div style="width:72px;height:72px;border-radius:22px;overflow:hidden;box-shadow:0 6px 24px rgba(244,138,171,0.35)"><img src="imag01.jpeg" alt="VISA" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.innerHTML='🏥';this.parentElement.style.display='flex';this.parentElement.style.alignItems='center';this.parentElement.style.justifyContent='center';this.parentElement.style.fontSize='44px'"></div>
+  <div style="font-family:'Playfair Display',serif;font-size:20px;font-weight:700">VISA Careiro</div>
+  <div style="font-size:13px;color:var(--text-muted)">Carregando dados da nuvem…</div>
+  <div style="width:200px;height:6px;background:rgba(249,184,200,0.4);border-radius:50px;overflow:hidden;margin-top:4px">
+    <div style="height:100%;width:60%;background:var(--rosa-dark);border-radius:50px;animation:shimmer 1.5s infinite;background-size:200% 100%"></div>
+  </div>
+</div>
+
+<!-- Mobile Overlay -->
+<div class="mobile-overlay" id="mobileOverlay" onclick="closeSidebar()"></div>
+
+<!-- Sidebar -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon"><img src="imag01.jpeg" alt="VISA Logo" onerror="this.parentElement.textContent='🏥'"></div>
+    <h1>VISA Careiro</h1>
+    <p>Cadastro Sanitário Municipal</p>
+  </div>
+
+  <div class="sidebar-user" id="sidebarUserInfo">
+    <div class="sidebar-user-avatar" id="sidebarAvatar">👤</div>
+    <div class="sidebar-user-info">
+      <div class="sidebar-user-name" id="sidebarUserName">—</div>
+      <div class="sidebar-user-role" id="sidebarUserRole">—</div>
+    </div>
+  </div>
+  <button class="btn-logout" onclick="doLogout()">🚪 Sair do sistema</button>
+  <div class="nav-section" id="navSectionMenuPrincipal">Menu Principal</div>
+  <button class="nav-item active" data-page="dashboard"        onclick="navigate('dashboard')"><span class="icon">📊</span> Dashboard</button>
+  <button class="nav-item"        data-page="estabelecimentos" onclick="navigate('estabelecimentos')"><span class="icon">🏪</span> Estabelecimentos</button>
+  <button class="nav-item"        data-page="inativos"         onclick="navigate('inativos')"><span class="icon">🚫</span> Inativos</button>
+  <button class="nav-item"        data-page="fiscalizacao"     onclick="navigate('fiscalizacao')"><span class="icon">🔍</span> Fiscalizações</button>
+
+  <!-- Itens exclusivos do fiscal (ocultos para admin) -->
+  <div class="nav-section" id="navSectionFiscal" style="display:none">Minha Área</div>
+  <button class="nav-item" id="navFiscRegistro" data-page="fiscalizacao" onclick="navigate('fiscalizacao')" style="display:none"><span class="icon">📋</span> Registro de Fiscalizações</button>
+  <button class="nav-item" id="navFiscEstabs"   data-page="fiscal_estabs" onclick="navigate('fiscal_estabs')" style="display:none"><span class="icon">🏪</span> Estabelecimentos para Fiscalizar</button>
+  <button class="nav-item" id="navMeuCadastro"  data-page="meu_cadastro" onclick="navigate('meu_cadastro')" style="display:none"><span class="icon">👤</span> Meu Cadastro</button>
+
+  <div class="nav-section" id="navSectionSistema">Sistema</div>
+  <button class="nav-item"        data-page="configuracoes"    onclick="navigate('configuracoes')"><span class="icon">⚙️</span> Configurações</button>
+
+  <div class="sidebar-footer">
+    <div>Município de Careiro, AM</div>
+    <div style="margin-top:4px">VISA — Vigilância Sanitária</div>
+    <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-size:10px;color:var(--text-muted);opacity:.75">
+      Desenvolvido por <strong style="color:var(--text-light)">Darlan Cardoso</strong>
+    </div>
+  </div>
+</aside>
+
+<!-- Main -->
+<main class="main">
+  <div class="topbar">
+    <button class="hamburger" onclick="toggleSidebar()">☰</button>
+    <div class="topbar-title" id="topbarTitle">Dashboard</div>
+    <div class="topbar-stats">
+      <div class="topbar-badge">Total: <span id="badgeTotal">0</span></div>
+      <div class="topbar-badge">Fiscalizados: <span id="badgeFiscalizado">0</span></div>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ═══════════ DASHBOARD ═══════════ -->
+    <div class="page active" id="page-dashboard">
+      <div class="stats-grid">
+        <div class="stat-card rosa">
+          <div class="stat-icon">🏪</div>
+          <div class="stat-label">Estabelecimentos</div>
+          <div class="stat-value" id="statTotal">0</div>
+          <div class="stat-sub">Cadastrados no sistema</div>
+        </div>
+        <div class="stat-card amarelo">
+          <div class="stat-icon">📋</div>
+          <div class="stat-label">Fiscalizados</div>
+          <div class="stat-value" id="statFiscalizado">0</div>
+          <div class="stat-sub">Com vistoria registrada</div>
+        </div>
+        <div class="stat-card verde">
+          <div class="stat-icon">✅</div>
+          <div class="stat-label">Regulares</div>
+          <div class="stat-value" id="statRegular">0</div>
+          <div class="stat-sub">Status: fiscalizado</div>
+        </div>
+        <div class="stat-card danger">
+          <div class="stat-icon">⚠️</div>
+          <div class="stat-label">Pendentes</div>
+          <div class="stat-value" id="statPendente">0</div>
+          <div class="stat-sub">Sem vistoria registrada</div>
+        </div>
+        <div class="stat-card" style="--card-accent:#b08090">
+          <div class="stat-icon">🚫</div>
+          <div class="stat-label">Inativos</div>
+          <div class="stat-value" id="statInativos" style="color:var(--text-muted)">0</div>
+          <div class="stat-sub">Estabelecimentos desativados</div>
+        </div>
+      </div>
+
+      <div class="dash-grid">
+        <div class="dash-card">
+          <h3>📍 Estabelecimentos por Localidade</h3>
+          <div id="bairroChart"></div>
+        </div>
+        <div class="dash-card">
+          <h3>⚡ Classe de Risco</h3>
+          <div class="pie-legend" id="riscoChart"></div>
+        </div>
+        <div class="dash-card">
+          <h3>🏷️ Top Categorias</h3>
+          <div id="catChart"></div>
+        </div>
+        <div class="dash-card">
+          <h3>📅 Licenciamentos Próximos ao Vencimento</h3>
+          <div id="vencimentoList"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════ ESTABELECIMENTOS ═══════════ -->
+    <div class="page" id="page-estabelecimentos">
+      <div class="search-container">
+        <span class="search-icon">🔍</span>
+        <input class="search-input" id="searchInput" type="text" placeholder="Buscar por nome, razão social, endereço, CNAE..." oninput="onSearch()">
+        <button class="search-clear" id="searchClear" onclick="clearSearch()">✕</button>
+      </div>
+
+      <div class="filters-row">
+        <select class="filter-select" id="filterBairro" onchange="setFilter('bairro', this.value)">
+          <option value="">Todas as localidades</option>
+        </select>
+        <select class="filter-select" id="filterCategoria" onchange="onFilterCategoria()">
+          <option value="">Todas as categorias</option>
+        </select>
+        <select class="filter-select" id="filterRisco" onchange="onFilterRisco()">
+          <option value="">Todos os riscos</option>
+          <option value="BAIXO RISCO">Baixo Risco</option>
+          <option value="ALTO RISCO">Alto Risco</option>
+        </select>
+        <button class="btn btn-ghost btn-sm" onclick="resetEstabFilters()" title="Limpar todos os filtros" style="border-radius:50px;padding:6px 14px;font-size:12px">↺ Resetar</button>
+      </div>
+
+      <div class="table-section" style="margin-top:20px">
+        <div class="table-header">
+          <h2>Estabelecimentos</h2>
+          <div style="display:flex;gap:10px;align-items:center">
+            <span class="count-badge" id="resultCount">0 resultados</span>
+            <button class="btn btn-primary btn-sm" onclick="openAdd()">＋ Novo</button>
+            <button class="btn btn-print btn-sm" onclick="imprimirEstabelecimentos()">🖨️ Imprimir</button>
+          </div>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Nome Fantasia</th>
+                <th>Razão Social</th>
+                <th>Endereço</th>
+                <th>Localidade</th>
+                <th>Categoria</th>
+                <th>Risco</th>
+                <th>Situação</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+        </div>
+        <div class="pagination">
+          <div class="pagination-info" id="paginationInfo"></div>
+          <div class="pagination-btns" id="paginationBtns"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════ FISCALIZAÇÕES ═══════════ -->
+    <div class="page" id="page-fiscalizacao">
+
+      <!-- Seção 2: Registro de Fiscalizações -->
+      <div style="margin-top:28px">
+        <div class="search-container">
+          <span class="search-icon">🔍</span>
+          <input class="search-input" id="searchFisc" type="text" placeholder="Buscar fiscalização por estabelecimento, equipe..." oninput="renderFiscRegistros()">
+        </div>
+        <div class="filters-row" style="margin-top:14px">
+          <button class="filter-chip active" onclick="setFiscFilter('')">Todos</button>
+          <button class="filter-chip" onclick="setFiscFilter('fiscalizado')">✅ Fiscalizado</button>
+          <button class="filter-chip" onclick="setFiscFilter('pendente')">⏳ Pendente</button>
+          <button class="filter-chip" onclick="setFiscFilter('irregular')">❌ Irregular</button>
+          <select class="filter-select" id="fiscSortSelect" onchange="fiscSort=this.value;renderFiscRegistros()" style="margin-left:auto">
+            <option value="recentes">📅 Mais Recentes</option>
+            <option value="az">🔤 A → Z</option>
+          </select>
+          <button class="btn btn-ghost btn-sm" onclick="resetFiscFilters()" title="Limpar filtros" style="border-radius:50px;padding:6px 14px;font-size:12px;margin-left:4px">↺ Resetar</button>
+        </div>
+        <div class="table-section" style="margin-top:20px">
+          <div class="table-header">
+            <h2>Registro de Fiscalizações</h2>
+            <div style="display:flex;gap:10px;align-items:center">
+              <span class="count-badge" id="fiscCount">0 registros</span>
+              <button class="btn btn-print btn-sm" onclick="imprimirFiscalizacoes()">🖨️ Imprimir</button>
+            </div>
+          </div>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Estabelecimento</th>
+                  <th>Localidade</th>
+                  <th>Data</th>
+                  <th>Equipe</th>
+                  <th>Status</th>
+                  <th>Observação</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="fiscTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="empty-state" id="fiscEmpty" style="display:none">
+          <div class="icon">📋</div>
+          <h3>Nenhuma fiscalização registrada</h3>
+          <p>Selecione um estabelecimento acima e clique em 🔍 para registrar uma vistoria.</p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ═══════════ MEU CADASTRO (fiscal only) ═══════════ -->
+    <div class="page" id="page-meu_cadastro">
+      <div class="fiscal-profile-card" id="fiscalProfileSection" style="max-width:680px">
+        <h3>👤 Meu Cadastro</h3>
+        <p>Seus dados como fiscal da Vigilância Sanitária</p>
+        <div class="profile-info-grid" id="fiscalProfileInfo">
+          <div class="profile-info-item"><label>Nome Completo</label><p id="pfNome">—</p></div>
+          <div class="profile-info-item"><label>Matrícula</label><p id="pfMatricula">—</p></div>
+          <div class="profile-info-item"><label>Telefone</label><p id="pfTelefone">—</p></div>
+          <div class="profile-info-item"><label>Equipe Vinculada</label><p id="pfEquipe">—</p></div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="openFiscalSetup(true)">✏️ Editar Meus Dados</button>
+      </div>
+      <!-- Redefinição de senha dentro do perfil do fiscal -->
+      <div class="fiscal-profile-card" style="max-width:680px;margin-top:22px">
+        <h3>🔐 Alterar Senha de Acesso</h3>
+        <p>Redefina sua senha de acesso ao sistema VISA Careiro</p>
+        <div class="form-group" style="max-width:340px;margin-top:16px">
+          <label style="display:block;font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:.6px;text-transform:uppercase;margin-bottom:6px">Nova Senha</label>
+          <input class="form-input" type="password" id="newPasswordFiscal" placeholder="Mínimo 6 caracteres" autocomplete="new-password">
+        </div>
+        <div class="form-group" style="max-width:340px;margin-top:12px">
+          <label style="display:block;font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:.6px;text-transform:uppercase;margin-bottom:6px">Confirmar Nova Senha</label>
+          <input class="form-input" type="password" id="confirmPasswordFiscal" placeholder="Repita a nova senha" autocomplete="new-password">
+        </div>
+        <button class="btn btn-primary" style="margin-top:16px" onclick="changeUserPassword('newPasswordFiscal','confirmPasswordFiscal')">🔒 Alterar Senha</button>
+      </div>
+    </div>
+
+    <!-- ═══════════ ESTABELECIMENTOS PARA FISCALIZAR (fiscal only) ═══════════ -->
+    <div class="page" id="page-fiscal_estabs">
+      <div class="table-section">
+        <div class="table-header">
+          <h2>🏪 Estabelecimentos para Fiscalizar</h2>
+          <div style="display:flex;gap:10px;align-items:center">
+            <span class="count-badge" id="fiscEstabCount">0 estabelecimentos</span>
+          </div>
+        </div>
+        <div style="padding:14px 22px 0">
+          <div class="search-container">
+            <span class="search-icon">🔍</span>
+            <input class="search-input" id="searchFiscEstab" type="text" placeholder="Buscar estabelecimento..." oninput="renderFiscEstabs()">
+            <button class="search-clear" onclick="document.getElementById('searchFiscEstab').value='';renderFiscEstabs()">✕</button>
+          </div>
+          <div class="filters-row" style="margin-top:10px;margin-bottom:14px">
+            <select class="filter-select" id="fiscEstabFilterBairro" onchange="fiscEstabFilters.bairro=this.value;fiscEstabPage=1;renderFiscEstabs()">
+              <option value="">Todas as localidades</option>
+            </select>
+            <select class="filter-select" id="fiscEstabFilterCategoria" onchange="fiscEstabFilters.categoria=this.value;fiscEstabPage=1;renderFiscEstabs()">
+              <option value="">Todas as categorias</option>
+            </select>
+            <select class="filter-select" id="fiscEstabFilterRisco" onchange="fiscEstabFilters.risco=this.value;fiscEstabPage=1;renderFiscEstabs()">
+              <option value="">Todos os riscos</option>
+              <option value="BAIXO RISCO">Baixo Risco</option>
+              <option value="ALTO RISCO">Alto Risco</option>
+            </select>
+            <select class="filter-select" id="fiscEstabFilterStatus" onchange="fiscEstabFilters.status=this.value;fiscEstabPage=1;renderFiscEstabs()">
+              <option value="">Todos os status</option>
+              <option value="fiscalizado">✅ Fiscalizado</option>
+              <option value="pendente">⏳ Pendente</option>
+              <option value="irregular">❌ Irregular</option>
+            </select>
+            <select class="filter-select" id="fiscEstabSortSelect" onchange="fiscEstabSort=this.value;fiscEstabPage=1;renderFiscEstabs()">
+              <option value="az">🔤 A → Z</option>
+              <option value="za">🔤 Z → A</option>
+              <option value="recentes">📅 Mais Recentes</option>
+            </select>
+            <button class="btn btn-ghost btn-sm" onclick="resetFiscEstabFilters()" style="border-radius:50px;padding:6px 14px;font-size:12px">↺ Resetar</button>
+          </div>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Nome Fantasia</th>
+                <th>Razão Social</th>
+                <th>Endereço</th>
+                <th>Localidade</th>
+                <th>Categoria</th>
+                <th>Risco</th>
+                <th>Status Vistoria</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="fiscEstabTableBody"></tbody>
+          </table>
+        </div>
+        <div class="pagination">
+          <div class="pagination-info" id="fiscEstabPaginationInfo"></div>
+          <div class="pagination-btns" id="fiscEstabPaginationBtns"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════ INATIVOS ═══════════ -->
+    <div class="page" id="page-inativos">
+      <div class="search-container">
+        <span class="search-icon">🔍</span>
+        <input class="search-input" id="searchInativos" type="text" placeholder="Buscar estabelecimento inativo..." oninput="renderInativos()">
+        <button class="search-clear" onclick="document.getElementById('searchInativos').value='';renderInativos()">✕</button>
+      </div>
+      <div class="table-section" style="margin-top:20px">
+        <div class="table-header">
+          <h2>🚫 Estabelecimentos Inativos</h2>
+          <div style="display:flex;gap:10px;align-items:center">
+            <span class="count-badge" id="inativosCount">0 resultados</span>
+          </div>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Nome Fantasia</th>
+                <th>Razão Social</th>
+                <th>Endereço</th>
+                <th>Localidade</th>
+                <th>Categoria</th>
+                <th>Risco</th>
+                <th>Situação</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="inativosTableBody"></tbody>
+          </table>
+        </div>
+        <div class="pagination">
+          <div class="pagination-info" id="inativosPaginationInfo"></div>
+          <div class="pagination-btns" id="inativosPaginationBtns"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════ CONFIGURAÇÕES ═══════════ -->
+    <div class="page" id="page-configuracoes">
+      <div class="config-sections">
+
+        <!-- Equipes -->
+        <div class="config-card">
+          <h3>👥 Equipes de Fiscalização</h3>
+          <p>Gerencie as equipes da Vigilância Sanitária</p>
+          <div class="input-group" style="margin-bottom:16px">
+            <input class="form-input" id="newAgentName" placeholder="Nome da equipe...">
+            <input class="form-input" id="newAgentRole" placeholder="Responsável/Tipo..." style="max-width:200px">
+            <button class="btn btn-primary" onclick="addAgent()">+ Adicionar</button>
+          </div>
+          <div class="agent-list" id="agentList"></div>
+        </div>
+
+        <!-- Notificações -->
+        <div class="config-card">
+          <h3>🔔 Notificações</h3>
+          <p>Controle de alertas e avisos do sistema</p>
+          <div class="switch-row">
+            <div><div class="switch-label">Alerta de Licença Vencendo</div><div class="switch-sub">Avisar 30 dias antes do vencimento</div></div>
+            <label class="switch"><input type="checkbox" id="togLicenca" checked onchange="saveConfig()"><span class="slider"></span></label>
+          </div>
+        </div>
+
+        <!-- Localidades -->
+        <div class="config-card">
+          <h3>📍 Localidades</h3>
+          <p>Gerencie as localidades disponíveis para seleção nos cadastros e filtros</p>
+          <div class="input-group" style="margin-bottom:16px">
+            <input class="form-input" id="newBairroName" placeholder="Nome da localidade...">
+            <button class="btn btn-primary" onclick="addBairro()">+ Adicionar</button>
+          </div>
+          <div class="bairro-tags" id="bairroTagList"></div>
+        </div>
+
+        <!-- ══ BACKUP UNIVERSAL ══ -->
+        <div class="config-card">
+          <h3>💾 Backup Universal do Sistema</h3>
+          <p>Realiza backup de <strong>todos os dados hospedados</strong>: estabelecimentos ativos e inativos, fiscalizações, agentes e configurações — tudo em um único arquivo JSON. Use os botões abaixo para exportar ou importar.</p>
+
+          <!-- Exportar -->
+          <div style="margin-top:18px">
+            <div style="font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:.8px;text-transform:uppercase;margin-bottom:8px">📤 Exportar</div>
+            <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+              <button class="btn btn-primary" onclick="backupData()">⬇️ Exportar Backup Completo</button>
+              <span style="font-size:12px;color:var(--text-muted)">Gera um <code>.json</code> com todos os dados do sistema</span>
+            </div>
+          </div>
+
+          <!-- Importar -->
+          <div style="margin-top:18px">
+            <div style="font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:.8px;text-transform:uppercase;margin-bottom:8px">📥 Importar</div>
+            <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+              <button class="btn btn-ghost" onclick="importBackup()">⬆️ Importar Backup</button>
+              <span style="font-size:12px;color:var(--text-muted)">Restaura um backup <code>.json</code> exportado anteriormente</span>
+            </div>
+          </div>
+
+          <input type="file" id="importFile" accept=".json" style="display:none" onchange="doImport(event)">
+          <div id="backupImportResult" style="display:none;margin-top:16px;padding:14px 16px;border-radius:var(--radius-sm);font-size:13px;line-height:1.7"></div>
+
+          <!-- Limpar fiscalizações -->
+          <div style="margin-top:18px;padding-top:16px;border-top:1px solid var(--border)">
+            <div style="font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:.8px;text-transform:uppercase;margin-bottom:8px">⚠️ Zona de Perigo</div>
+            <button class="btn btn-danger" onclick="clearAllFiscalizacoes()">🗑️ Limpar Todas as Fiscalizações</button>
+          </div>
+
+          <div style="margin-top:14px;font-size:13px;color:var(--text-muted)" id="configStats"></div>
+        </div>
+
+        <!-- Alterar Senha -->
+        <div class="config-card">
+          <h3>🔐 Alterar Senha de Acesso</h3>
+          <p>Redefina sua senha de acesso ao sistema VISA Careiro</p>
+          <div class="form-group" style="max-width:340px;margin-top:16px">
+            <label style="display:block;font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:.6px;text-transform:uppercase;margin-bottom:6px">Nova Senha</label>
+            <input class="form-input" type="password" id="newPasswordAdmin" placeholder="Mínimo 6 caracteres" autocomplete="new-password">
+          </div>
+          <div class="form-group" style="max-width:340px;margin-top:12px">
+            <label style="display:block;font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:.6px;text-transform:uppercase;margin-bottom:6px">Confirmar Nova Senha</label>
+            <input class="form-input" type="password" id="confirmPasswordAdmin" placeholder="Repita a nova senha" autocomplete="new-password">
+          </div>
+          <button class="btn btn-primary" style="margin-top:16px" onclick="changeUserPassword('newPasswordAdmin','confirmPasswordAdmin')">🔒 Alterar Senha</button>
+        </div>
+
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</main>
+
+<!-- ─── MODAL DETALHES ─────────────────────────────── -->
+<div class="overlay" id="modalDetail">
+  <div class="modal" style="max-width:680px">
+    <div class="modal-header">
+      <div>
+        <h2 id="detailNome">—</h2>
+        <div style="margin-top:6px;display:flex;gap:8px;flex-wrap:wrap" id="detailBadges"></div>
+      </div>
+      <button class="modal-close" onclick="closeModal('modalDetail')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="info-grid" id="detailInfo"></div>
+      <hr class="divider">
+      <h3 style="font-family:Playfair Display,serif;font-size:16px;margin-bottom:14px">📋 Histórico de Fiscalizações</h3>
+      <div id="detailHistory"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── MODAL FISCALIZAR ────────────────────────────── -->
+<div class="overlay" id="modalInspect">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-header">
+      <div>
+        <h2>🔍 Registrar Fiscalização</h2>
+        <div style="margin-top:4px;font-size:13px;color:var(--text-light)" id="inspectNomeLabel">—</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('modalInspect')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="inspect-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Data da Vistoria</label>
+            <input class="form-input" type="date" id="inspDate">
+          </div>
+          <div class="form-group">
+            <label>Equipe Responsável</label>
+            <select class="form-select" id="inspAgent">
+              <option value="">Selecionar equipe...</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Status da Vistoria</label>
+          <select class="form-select" id="inspStatus">
+            <option value="fiscalizado">✅ Fiscalizado — Regular</option>
+            <option value="pendente">⏳ Pendente — Aguardando regularização</option>
+            <option value="irregular">❌ Irregular — Notificado</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Observações</label>
+          <textarea class="form-textarea" id="inspObs" placeholder="Descreva as condições encontradas, pendências, notificações..."></textarea>
+        </div>
+        <div style="display:flex;gap:10px;justify-content:flex-end">
+          <button class="btn btn-ghost" onclick="closeModal('modalInspect')">Cancelar</button>
+          <button class="btn btn-primary" onclick="saveInspection()">💾 Salvar Fiscalização</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── MODAL EDITAR FISCALIZAÇÃO ───────────────────── -->
+<div class="overlay" id="modalEditFisc">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-header">
+      <div>
+        <h2>✏️ Editar Fiscalização</h2>
+        <div style="margin-top:4px;font-size:13px;color:var(--text-light)" id="editFiscNomeLabel">—</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('modalEditFisc')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="inspect-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Data da Vistoria</label>
+            <input class="form-input" type="date" id="editFiscDate">
+          </div>
+          <div class="form-group">
+            <label>Equipe Responsável</label>
+            <select class="form-select" id="editFiscAgent">
+              <option value="">Selecionar equipe...</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Status da Vistoria</label>
+          <select class="form-select" id="editFiscStatus">
+            <option value="fiscalizado">✅ Fiscalizado — Regular</option>
+            <option value="pendente">⏳ Pendente — Aguardando regularização</option>
+            <option value="irregular">❌ Irregular — Notificado</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Observações</label>
+          <textarea class="form-textarea" id="editFiscObs" placeholder="Descreva as condições encontradas, pendências, notificações..."></textarea>
+        </div>
+        <div style="display:flex;gap:10px;justify-content:flex-end">
+          <button class="btn btn-ghost" onclick="closeModal('modalEditFisc')">Cancelar</button>
+          <button class="btn btn-primary" onclick="saveEditFisc()">💾 Salvar Alterações</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── MODAL CONFIRMAR EXCLUSÃO DE FISCALIZAÇÃO ──── -->
+<div class="overlay" id="modalConfirmDelFisc">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header" style="background:var(--danger-bg)">
+      <h2 style="color:var(--danger)">🗑️ Excluir Fiscalização</h2>
+      <button class="modal-close" onclick="closeModal('modalConfirmDelFisc')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:15px;margin-bottom:6px">Tem certeza que deseja excluir esta fiscalização de:</p>
+      <p style="font-weight:700;font-size:16px;color:var(--text);margin-bottom:16px" id="delFiscNomeLabel">—</p>
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:22px">Esta ação removerá apenas este registro de vistoria. Não pode ser desfeita.</p>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button class="btn btn-ghost" onclick="closeModal('modalConfirmDelFisc')">Cancelar</button>
+        <button class="btn btn-danger" onclick="confirmDeleteFisc()">🗑️ Excluir fiscalização</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── MODAL ADD/EDIT ESTABELECIMENTO ─────────────── -->
+<div class="overlay" id="modalEstab">
+  <div class="modal" style="max-width:680px">
+    <div class="modal-header">
+      <div>
+        <h2 id="estabModalTitle">＋ Novo Estabelecimento</h2>
+        <div style="margin-top:4px;font-size:13px;color:var(--text-light)" id="estabModalSub">Preencha os dados do estabelecimento</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('modalEstab')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="inspect-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nome Fantasia *</label>
+            <input class="form-input" id="estNome" placeholder="Ex: MERCADINHO BOA SORTE">
+          </div>
+          <div class="form-group">
+            <label>Razão Social</label>
+            <input class="form-input" id="estRazao" placeholder="Ex: JOÃO DA SILVA ME">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Endereço</label>
+            <input class="form-input" id="estEndereco" placeholder="Ex: RUA DAS FLORES Nº 12">
+          </div>
+          <div class="form-group">
+            <label>Localidade *</label>
+            <select class="form-select" id="estBairro">
+              <option value="">Selecionar...</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Categoria</label>
+            <input class="form-input" id="estCategoria" list="catList" placeholder="Ex: MERCADINHO">
+            <datalist id="catList"></datalist>
+          </div>
+          <div class="form-group">
+            <label>Tipo de Atividade</label>
+            <input class="form-input" id="estAtividade" placeholder="Ex: VENDA DE ESTIVAS EM GERAL">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>CNAE</label>
+            <input class="form-input" id="estCnae" placeholder="Ex: 4712-1/00">
+          </div>
+          <div class="form-group">
+            <label>Classe de Risco</label>
+            <select class="form-select" id="estRisco">
+              <option value="">Não informado</option>
+              <option value="BAIXO RISCO">Baixo Risco</option>
+              <option value="ALTO RISCO">Alto Risco</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Último Licenciamento / Inspeção</label>
+            <input class="form-input" type="date" id="estLicenca">
+          </div>
+          <div class="form-group">
+            <label>Órgão Licenciador</label>
+            <input class="form-input" id="estOrgao" placeholder="Ex: VISA/CAREIRO">
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:6px">
+          <button class="btn btn-ghost" onclick="closeModal('modalEstab')">Cancelar</button>
+          <button class="btn btn-primary" onclick="saveEstab()">💾 Salvar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── MODAL CONFIRMAR DESATIVAÇÃO ────────────────── -->
+<div class="overlay" id="modalConfirmDel">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header" style="background:var(--warning-bg)">
+      <h2 style="color:#7a4e00">🚫 Desativar Estabelecimento</h2>
+      <button class="modal-close" onclick="closeModal('modalConfirmDel')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:15px;margin-bottom:6px">Tem certeza que deseja desativar:</p>
+      <p style="font-weight:700;font-size:16px;color:var(--text);margin-bottom:16px" id="delNomeLabel">—</p>
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:22px">O estabelecimento será movido para a aba <strong>Inativos</strong>. Você poderá reativá-lo a qualquer momento.</p>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button class="btn btn-ghost" onclick="closeModal('modalConfirmDel')">Cancelar</button>
+        <button class="btn btn-amarelo" onclick="confirmDeactivate()">🚫 Desativar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── MODAL PREVIEW DE IMPRESSÃO ────────────────── -->
+<div class="overlay" id="printPreviewModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <h2 id="printModalTitle">🖨️ Imprimir</h2>
+        <div style="font-size:13px;color:var(--text-light);margin-top:4px" id="printModalSub">Pré-visualização do documento oficial</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('printPreviewModal')">✕</button>
+    </div>
+    <div class="modal-body" style="padding:0">
+      <div style="padding:16px 24px;background:rgba(249,184,200,0.12);border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <button class="btn btn-primary" onclick="executarImpressao()">🖨️ Imprimir / Salvar PDF</button>
+        <button class="btn btn-ghost"   onclick="closeModal('printPreviewModal')">Fechar</button>
+        <span style="font-size:12px;color:var(--text-muted);margin-left:auto">Use Ctrl+P ou o botão acima para imprimir</span>
+      </div>
+      <div style="padding:24px;background:#f8f8f8;min-height:400px">
+        <div id="printContent" style="background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08)"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── MODAL CONFIRMAR EXCLUSÃO DE LOCALIDADE ──────────── -->
+<div class="overlay" id="modalConfirmDelBairro">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header" style="background:var(--warning-bg)">
+      <h2 style="color:#7a4e00">🗺️ Excluir Localidade</h2>
+      <button class="modal-close" onclick="closeModal('modalConfirmDelBairro')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:15px;margin-bottom:6px">Tem certeza que deseja excluir a localidade:</p>
+      <p style="font-weight:700;font-size:16px;color:var(--text);margin-bottom:16px" id="delBairroLabel">—</p>
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:22px">Após a exclusão, a localidade não estará mais disponível para seleção. Os cadastros existentes não serão alterados.</p>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button class="btn btn-ghost" onclick="closeModal('modalConfirmDelBairro')">Cancelar</button>
+        <button class="btn btn-danger" onclick="confirmRemoveBairro()">🗑️ Excluir localidade</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ─── MODAL SETUP FISCAL ─────────────────────────── -->
+<div class="overlay" id="modalFiscalSetup">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-header">
+      <div>
+        <h2 id="fiscalSetupTitle">👤 Configure Seu Cadastro</h2>
+        <div style="margin-top:4px;font-size:13px;color:var(--text-light)" id="fiscalSetupSub">Preencha seus dados como fiscal da VISA</div>
+      </div>
+      <button class="modal-close" id="fiscalSetupClose" onclick="closeFiscalSetup()" style="display:none">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="inspect-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nome Completo *</label>
+            <input class="form-input auto-upper" id="fsNome" placeholder="SEU NOME COMPLETO">
+          </div>
+          <div class="form-group">
+            <label>Matrícula *</label>
+            <input class="form-input auto-upper" id="fsMatricula" placeholder="EX: 12345">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Telefone</label>
+            <input class="form-input" id="fsTelefone" placeholder="(92) 99999-9999" type="tel">
+          </div>
+          <div class="form-group">
+            <label>Equipe (opcional)</label>
+            <select class="form-select" id="fsEquipe">
+              <option value="">Sem equipe vinculada</option>
+            </select>
+          </div>
+        </div>
+        <div id="fsFirstAccessNote" style="background:var(--amarelo-soft);border:1px solid var(--amarelo-dark);border-radius:var(--radius-sm);padding:12px 14px;font-size:13px;color:#7a5c00;margin-top:4px">
+          ℹ️ Este é seu <strong>primeiro acesso</strong>. Configure seus dados para continuar usando o sistema.
+        </div>
+        <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:6px">
+          <button class="btn btn-ghost" id="fiscalSetupCancelBtn" onclick="closeFiscalSetup()" style="display:none">Cancelar</button>
+          <button class="btn btn-primary" onclick="saveFiscalProfile()">💾 Salvar Cadastro</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Toast container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// ESTADO GLOBAL
+// ═══════════════════════════════════════════════════════
+let DADOS = [];
+let _DADOS_ORIGINAL = [];
+let currentPage      = 'dashboard';
+let currentEstabPage = 1;
+let currentInativosPage = 1;
+let fiscEstabPage    = 1;
+const PAGE_SIZE      = 20;
+let filters          = { q: '', bairro: '', categoria: '', risco: '', status: '' };
+let fiscEstabFilters = { q: '', bairro: '', categoria: '', risco: '', status: '' };
+let currentInspectId = null;
+let currentEditId    = null;
+let fiscFilter       = '';
+let fiscSort         = 'recentes'; // 'recentes' | 'az'
+let fiscEstabSort    = 'az';       // 'az' | 'za' | 'recentes'
+let _pendingDeleteId = null;
+let _editFiscId      = null; // estabId being edited in fiscalizacao
+let _editFiscIdx     = null; // index within inspections array
+
+// ═══════════════════════════════════════════════════════
+// FIREBASE SETUP — via firebase-config.js (módulo externo)
+// _fbApp · _db · _fbAuth · _STATE_REF · _BASE_REF
+// _INATIVOS_REF · _USERS_REF  já estão disponíveis globalmente.
+// ═══════════════════════════════════════════════════════
+
+// ─── CURRENT USER (set after login) ────────────────────────
+let _currentUser = null; // { uid, email, role, profile }
+
+// Try restore session from sessionStorage
+(function(){
+  try {
+    const s = sessionStorage.getItem('visa_session');
+    if (s) _currentUser = JSON.parse(s);
+  } catch(e) {}
+})();
+
+const _fbCache = {
+  inspections: {},
+  agents: [],
+  config: { licenca: true, semFisc: true },
+  custom: [],
+  deleted: [],
+  disabled: [],
+  edited: {},
+  bairros: ['ESTRADA DE AUTAZES', 'COMUNIDADE BOA VISTA','ESTRADA DO MANAQUIRI','JACAMIM','P  A PANELAO','PACATUBA','LAGO CASTANHO','ORGAOS PUBLICOS','UBS E OUTRAS UNIDADES DE SAUDE','RAMAL TIMBO','COMUNIDADE DO TILHEIRO','HOTEIS E POUSADAS','LAGO TILHEIRO','PURUPURU','PURUPURU RIO','ESCOLAS','SAMAUMA','LAGO JANAUACA','SAO JOSE','RAMAL FLORESTA','MAMORI I','LAGO TAPAGEM','MERCADO CENTRAL','CENTRO','BAIRRO NOVO','VISTA ALEGRE','NOVO HORIZONTE','NOVA ESPERANCA','SEBASTIAO BORGES'],
+  inativos_data: [] // cache local dos dados completos dos estabelecimentos inativos
+};
+
+function _saveField(field, value) {
+  _STATE_REF.set({ [field]: value }, { merge: true })
+    .catch(e => console.error('Firestore write [' + field + ']:', e));
+}
+
+// ═══════════════════════════════════════════════════════
+// DATA ACCESSORS
+// ═══════════════════════════════════════════════════════
+function getInspections()  { return _fbCache.inspections; }
+function saveInspections(d){ _fbCache.inspections = d; _saveField('inspections', d); }
+function getAgents()       { return _fbCache.agents; }
+function saveAgents(d)     { _fbCache.agents = d; _saveField('agents', d); }
+function getConfig()       { return _fbCache.config; }
+function saveConfig() {
+  _fbCache.config = {
+    licenca: document.getElementById('togLicenca')?.checked ?? true,
+  };
+  _saveField('config', _fbCache.config);
+}
+function getCustom()      { return _fbCache.custom; }
+function saveCustom(d)    { _fbCache.custom = d; _saveField('custom', d); }
+function getDeletedIds()  { return _fbCache.deleted; }
+function saveDeletedIds(d){ _fbCache.deleted = d; _saveField('deleted', d); }
+function getDisabledIds() { return _fbCache.disabled || []; }
+function saveDisabledIds(d){ _fbCache.disabled = d; _saveField('disabled', d); }
+function isDisabled(id)   { return getDisabledIds().map(String).includes(String(id)); }
+function getEditedMap()   { return _fbCache.edited; }
+function saveEditedMap(d) { _fbCache.edited = d; _saveField('edited', d); }
+function getBairros()     { return _fbCache.bairros && _fbCache.bairros.length ? _fbCache.bairros : ['Centro']; }
+function saveBairros(d)   { _fbCache.bairros = d; _saveField('bairros', d); }
+
+// ─── Dados completos dos inativos (doc separado) ────────
+function getInativosData()  { return _fbCache.inativos_data || []; }
+async function saveInativosData(lista) {
+  _fbCache.inativos_data = lista;
+  try {
+    await _INATIVOS_REF.set({ estabelecimentos: lista, updatedAt: new Date().toISOString() });
+  } catch(e) { console.error('Firestore write [inativos_data]:', e); }
+}
+
+function insKey(id) { return String(id); }
+
+function getStatusFor(id) {
+  const recs = getInspections()[insKey(id)];
+  if (!recs || !recs.length) return 'pendente';
+  const last = recs[recs.length - 1];
+  // Validade de 4 meses: após esse período retorna automaticamente para Pendente
+  if (last.date) {
+    const expiry = new Date(last.date + 'T00:00:00');
+    expiry.setMonth(expiry.getMonth() + 4);
+    const now = new Date(); now.setHours(0, 0, 0, 0);
+    if (now > expiry) return 'pendente';
+  }
+  return last.status;
+}
+
+// Retorna a data da última fiscalização registrada (string 'YYYY-MM-DD' ou '')
+function getLastInspDate(id) {
+  const recs = getInspections()[insKey(id)];
+  if (!recs || !recs.length) return '';
+  return recs[recs.length - 1].date || '';
+}
+
+function getLastInspection(id) {
+  const recs = getInspections()[insKey(id)];
+  if (!recs || !recs.length) return null;
+  return recs[recs.length - 1];
+}
+
+// ═══════════════════════════════════════════════════════
+// REBUILD DADOS
+// ═══════════════════════════════════════════════════════
+function rebuildDADOS() {
+  const deleted = getDeletedIds().map(String);
+  const edited  = getEditedMap();
+  const custom  = getCustom();
+  let base = _DADOS_ORIGINAL.filter(r => !deleted.includes(String(r.id)));
+  base = base.map(r => edited[String(r.id)] ? { ...r, ...edited[String(r.id)] } : r);
+  DADOS.length = 0;
+  [...base, ...custom].forEach(r => DADOS.push(r));
+}
+
+// ═══════════════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════════════
+function esc(s) {
+  if (s == null) return '';
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function formatDate(d) {
+  if (!d) return '—';
+  try {
+    const parts = d.toString().slice(0,10).split('-');
+    if (parts.length === 3) return parts[2]+'/'+parts[1]+'/'+parts[0];
+    const dt = new Date(d);
+    if (isNaN(dt)) return d;
+    return dt.toLocaleDateString('pt-BR');
+  } catch { return d; }
+}
+
+function daysUntil(d) {
+  const now  = new Date(); now.setHours(0,0,0,0);
+  const dt   = new Date(d + 'T00:00:00');
+  return Math.ceil((dt - now) / 86400000);
+}
+
+function showToast(msg, type = 'success') {
+  const c = document.getElementById('toastContainer');
+  const t = document.createElement('div');
+  t.className = 'toast ' + type;
+  t.innerHTML = (type === 'success' ? '✅' : '❌') + ' ' + msg;
+  c.appendChild(t);
+  setTimeout(() => {
+    t.style.animation = 'slideOut .3s ease forwards';
+    setTimeout(() => t.remove(), 300);
+  }, 3500);
+}
+
+function updateTopBadges() {
+  const active = DADOS.filter(r => !isDisabled(r.id));
+  let f = 0;
+  active.forEach(r => { if (getStatusFor(r.id) !== 'pendente') f++; });
+  document.getElementById('badgeTotal').textContent       = active.length;
+  document.getElementById('badgeFiscalizado').textContent = f;
+}
+
+function riskBadge(r) {
+  if (!r) return '<span class="badge badge-sem">Não informado</span>';
+  if (r.includes('BAIXO')) return '<span class="badge badge-baixo">🟢 Baixo</span>';
+  if (r.includes('ALTO'))  return '<span class="badge badge-alto">🔴 Alto</span>';
+  return '<span class="badge badge-sem">'+esc(r)+'</span>';
+}
+
+function activeBadge(disabled) {
+  return disabled
+    ? '<span class="badge badge-inativo">🚫 Inativo</span>'
+    : '<span class="badge badge-ativo">✅ Ativo</span>';
+}
+
+function statusBadge(st) {
+  if (st === 'fiscalizado') return '<span class="badge badge-fiscalizado">✅ Fiscalizado</span>';
+  if (st === 'irregular')   return '<span class="badge badge-irregular">❌ Irregular</span>';
+  return '<span class="badge badge-pendente">⏳ Pendente</span>';
+}
+
+function statusLabel(st) {
+  if (st === 'fiscalizado') return 'Fiscalizado';
+  if (st === 'irregular')   return 'Irregular';
+  return 'Pendente';
+}
+
+// ═══════════════════════════════════════════════════════
+// NAVEGAÇÃO
+// ═══════════════════════════════════════════════════════
+function navigate(pg) {
+  // Role guard: fiscal can only access their own pages
+  if (_currentUser && _currentUser.role === 'fiscal' && !['fiscalizacao','fiscal_estabs','meu_cadastro'].includes(pg)) {
+    showToast('Acesso restrito ao perfil Fiscal.','error');
+    pg = 'fiscalizacao';
+  }
+  currentPage = pg;
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const pageEl = document.getElementById('page-' + pg);
+  if (pageEl) pageEl.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => {
+    n.classList.toggle('active', n.dataset.page === pg);
+  });
+  const titles = {
+    dashboard:'Dashboard', estabelecimentos:'Estabelecimentos',
+    inativos:'Estabelecimentos Inativos',
+    fiscalizacao:'Registro de Fiscalizações',
+    fiscal_estabs:'Estabelecimentos para Fiscalizar',
+    configuracoes:'Configurações',
+    meu_cadastro:'Meu Cadastro'
+  };
+  document.getElementById('topbarTitle').textContent = titles[pg] || pg;
+  closeSidebar();
+  if (pg === 'dashboard')        renderDashboard();
+  if (pg === 'estabelecimentos') renderTable();
+  if (pg === 'inativos')         renderInativos();
+  if (pg === 'fiscalizacao')     renderFiscalizacoes();
+  if (pg === 'fiscal_estabs')    renderFiscEstabs();
+  if (pg === 'configuracoes')    renderConfig();
+  if (pg === 'meu_cadastro')     updateFiscalProfileDisplay();
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('mobileOverlay').classList.toggle('open');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('mobileOverlay').classList.remove('open');
+}
+
+// ═══════════════════════════════════════════════════════
+// FILTROS
+// ═══════════════════════════════════════════════════════
+function filteredData() {
+  const q = filters.q.toLowerCase().trim();
+  return DADOS.filter(r => {
+    // Sempre mostrar apenas estabelecimentos ATIVOS
+    if (isDisabled(r.id)) return false;
+    if (filters.bairro    && r.bairro       !== filters.bairro)    return false;
+    if (filters.categoria && r.categoria    !== filters.categoria) return false;
+    if (filters.risco     && r.classe_risco !== filters.risco)     return false;
+    if (q) {
+      const hay = [r.nome_fantasia, r.razao_social, r.endereco,
+                   r.tipo_atividade, r.cnae, r.categoria, r.bairro]
+                  .map(v => v || '').join(' ').toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+}
+
+function filteredDataInativos() {
+  const q = (document.getElementById('searchInativos')?.value||'').toLowerCase().trim();
+  return DADOS.filter(r => {
+    if (!isDisabled(r.id)) return false;
+    if (q) {
+      const hay = [r.nome_fantasia, r.razao_social, r.endereco,
+                   r.tipo_atividade, r.cnae, r.categoria, r.bairro]
+                  .map(v => v || '').join(' ').toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+}
+
+function filteredFiscEstabs() {
+  const q = (document.getElementById('searchFiscEstab')?.value||'').toLowerCase().trim();
+  let result = DADOS.filter(r => {
+    if (isDisabled(r.id)) return false;
+    if (fiscEstabFilters.bairro    && r.bairro       !== fiscEstabFilters.bairro)    return false;
+    if (fiscEstabFilters.categoria && r.categoria    !== fiscEstabFilters.categoria) return false;
+    if (fiscEstabFilters.risco     && r.classe_risco !== fiscEstabFilters.risco)     return false;
+    if (fiscEstabFilters.status    && getStatusFor(r.id) !== fiscEstabFilters.status) return false;
+    if (q) {
+      const hay = [r.nome_fantasia, r.razao_social, r.endereco,
+                   r.tipo_atividade, r.cnae, r.categoria, r.bairro]
+                  .map(v => v || '').join(' ').toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+  // Ordenação
+  if (fiscEstabSort === 'az') {
+    result.sort((a, b) => (a.nome_fantasia||'').localeCompare(b.nome_fantasia||'', 'pt-BR'));
+  } else if (fiscEstabSort === 'za') {
+    result.sort((a, b) => (b.nome_fantasia||'').localeCompare(a.nome_fantasia||'', 'pt-BR'));
+  } else if (fiscEstabSort === 'recentes') {
+    result.sort((a, b) => (getLastInspDate(b.id)||'').localeCompare(getLastInspDate(a.id)||''));
+  }
+  return result;
+}
+
+function setFilter(type, val) {
+  filters[type] = val;
+  currentEstabPage = 1;
+  if (currentPage === 'estabelecimentos') renderTable();
+}
+
+function onFilterCategoria() { filters.categoria = document.getElementById('filterCategoria').value; currentEstabPage = 1; renderTable(); }
+function onFilterRisco()     { filters.risco      = document.getElementById('filterRisco').value;     currentEstabPage = 1; renderTable(); }
+function onSearch() {
+  filters.q = document.getElementById('searchInput').value;
+  currentEstabPage = 1;
+  document.getElementById('searchClear').style.display = filters.q ? 'block' : 'none';
+  renderTable();
+}
+function clearSearch() {
+  document.getElementById('searchInput').value = '';
+  filters.q = '';
+  document.getElementById('searchClear').style.display = 'none';
+  renderTable();
+}
+
+// ═══════════════════════════════════════════════════════
+// TABELA DE ESTABELECIMENTOS
+// ═══════════════════════════════════════════════════════
+function renderTable() {
+  const data       = filteredData();
+  const total      = data.length;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  if (currentEstabPage > totalPages) currentEstabPage = totalPages;
+  const slice = data.slice((currentEstabPage - 1) * PAGE_SIZE, currentEstabPage * PAGE_SIZE);
+
+  document.getElementById('resultCount').textContent = total + ' resultado' + (total !== 1 ? 's' : '');
+
+  const tbody = document.getElementById('tableBody');
+  if (!slice.length) {
+    tbody.innerHTML = `<tr><td colspan="8">
+      <div class="empty-state">
+        <div class="icon">🔍</div>
+        <h3>Nenhum resultado</h3>
+        <p>Tente outros termos ou filtros.</p>
+      </div></td></tr>`;
+  } else {
+    tbody.innerHTML = slice.map(r => {
+      const disabled = isDisabled(r.id);
+      return `<tr>
+        <td><div class="td-nome">${esc(r.nome_fantasia)}</div></td>
+        <td><div class="td-razao">${esc(r.razao_social)}</div></td>
+        <td><div class="td-end">${esc(r.endereco)}</div></td>
+        <td><span class="badge badge-bairro">${esc(r.bairro)}</span></td>
+        <td>${r.categoria ? '<span class="badge badge-cat">'+esc(r.categoria)+'</span>'
+                          : '<span style="color:var(--text-muted);font-size:12px">—</span>'}</td>
+        <td>${riskBadge(r.classe_risco)}</td>
+        <td>${activeBadge(disabled)}</td>
+        <td><div class="td-actions">
+          <button class="action-btn view"    onclick="openDetail(${r.id})"  title="Ver detalhes">👁️</button>
+          <button class="action-btn edit"    onclick="openEdit(${r.id})"    title="Editar">✏️</button>
+          <button class="action-btn ${disabled?'activate':'deactivate'}" onclick="toggleEstab(${r.id})" title="${disabled?'Ativar estabelecimento':'Desativar estabelecimento'}">${disabled?'✅':'🚫'}</button>
+        </div></td>
+      </tr>`;
+    }).join('');
+  }
+
+  const info = document.getElementById('paginationInfo');
+  const btns = document.getElementById('paginationBtns');
+  const from = total === 0 ? 0 : (currentEstabPage - 1) * PAGE_SIZE + 1;
+  const to   = Math.min(currentEstabPage * PAGE_SIZE, total);
+  info.textContent = `Mostrando ${from}–${to} de ${total}`;
+
+  let bHtml = `<button class="page-btn" onclick="goPage(${currentEstabPage-1})" ${currentEstabPage===1?'disabled':''}>‹</button>`;
+  getPageRange(currentEstabPage, totalPages).forEach(p => {
+    if (p === '...') bHtml += `<button class="page-btn" disabled>…</button>`;
+    else bHtml += `<button class="page-btn ${p===currentEstabPage?'active':''}" onclick="goPage(${p})">${p}</button>`;
+  });
+  bHtml += `<button class="page-btn" onclick="goPage(${currentEstabPage+1})" ${currentEstabPage===totalPages?'disabled':''}>›</button>`;
+  btns.innerHTML = bHtml;
+}
+
+function getPageRange(cur, total) {
+  if (total <= 7) return Array.from({length:total},(_,i)=>i+1);
+  if (cur <= 4)         return [1,2,3,4,5,'...',total];
+  if (cur >= total - 3) return [1,'...',total-4,total-3,total-2,total-1,total];
+  return [1,'...',cur-1,cur,cur+1,'...',total];
+}
+
+function goPage(p) {
+  const tp = Math.max(1, Math.ceil(filteredData().length / PAGE_SIZE));
+  if (p < 1 || p > tp) return;
+  currentEstabPage = p;
+  renderTable();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ═══════════════════════════════════════════════════════
+// MODAL DETALHES
+// ═══════════════════════════════════════════════════════
+function openDetail(id) {
+  const r = DADOS.find(d => d.id === id);
+  if (!r) return;
+  const st = getStatusFor(id);
+  document.getElementById('detailNome').textContent = r.nome_fantasia;
+  document.getElementById('detailBadges').innerHTML =
+    `<span class="badge badge-bairro">${esc(r.bairro)}</span>
+     ${r.categoria ? '<span class="badge badge-cat">'+esc(r.categoria)+'</span>' : ''}
+     ${riskBadge(r.classe_risco)}
+     ${statusBadge(st)}`;
+  document.getElementById('detailInfo').innerHTML = `
+    <div class="info-item"><label>Razão Social</label><p>${esc(r.razao_social)||'—'}</p></div>
+    <div class="info-item"><label>Endereço</label><p>${esc(r.endereco)||'—'}</p></div>
+    <div class="info-item"><label>Tipo de Atividade</label><p>${esc(r.tipo_atividade)||'—'}</p></div>
+    <div class="info-item"><label>Último Licenciamento</label><p>${formatDate(r.ultimo_licenciamento)}</p></div>
+    <div class="info-item"><label>Órgão Licenciador</label><p>${esc(r.orgao_licenciador)||'—'}</p></div>
+    <div class="info-item"><label>CNAE</label><p>${esc(r.cnae)||'—'}</p></div>
+  `;
+  const recs = (getInspections()[insKey(id)] || []).slice().reverse();
+  const hist = document.getElementById('detailHistory');
+  if (!recs.length) {
+    hist.innerHTML = '<div class="empty-state" style="padding:24px"><div class="icon" style="font-size:32px">📋</div><p>Nenhuma fiscalização registrada.</p></div>';
+  } else {
+    hist.innerHTML = recs.map(rec => `
+      <div class="history-item ${rec.status}">
+        <div class="history-date">${formatDate(rec.date)} <span class="history-status">${statusBadge(rec.status)}</span></div>
+        <div class="history-agent">👤 ${esc(rec.agent)}</div>
+        ${rec.obs ? '<div class="history-obs">'+esc(rec.obs)+'</div>' : ''}
+      </div>`).join('');
+  }
+  openModal('modalDetail');
+}
+
+// ═══════════════════════════════════════════════════════
+// MODAL FISCALIZAR
+// ═══════════════════════════════════════════════════════
+function openInspect(id) {
+  const r = DADOS.find(d => d.id === id);
+  currentInspectId = id;
+  document.getElementById('inspectNomeLabel').textContent = r ? r.nome_fantasia : '—';
+  document.getElementById('inspDate').value   = new Date().toISOString().slice(0,10);
+  document.getElementById('inspStatus').value = 'fiscalizado';
+  document.getElementById('inspObs').value    = '';
+  const agents = getAgents();
+  const sel    = document.getElementById('inspAgent');
+  if (!agents.length) {
+    sel.innerHTML = '<option value="">⚠️ Cadastre equipes em Configurações</option>';
+  } else {
+    sel.innerHTML = '<option value="">Selecionar equipe...</option>' +
+      agents.map(a => `<option value="${esc(a.name)}">${esc(a.name)}${a.role?' — '+esc(a.role):''}</option>`).join('');
+  }
+  openModal('modalInspect');
+}
+
+function saveInspection() {
+  const date   = document.getElementById('inspDate').value;
+  const agent  = document.getElementById('inspAgent').value;
+  const status = document.getElementById('inspStatus').value;
+  const obs    = document.getElementById('inspObs').value.trim();
+  if (!date)  { showToast('Informe a data da vistoria!','error'); return; }
+  if (!agent) { showToast('Selecione a equipe responsável!','error'); return; }
+  const ins = getInspections();
+  const key = insKey(currentInspectId);
+  if (!ins[key]) ins[key] = [];
+  ins[key].push({ date, agent, status, obs, savedAt: new Date().toISOString() });
+  saveInspections(ins);
+  closeModal('modalInspect');
+  showToast('Fiscalização registrada! ✅','success');
+  updateTopBadges();
+  if (currentPage === 'estabelecimentos') renderTable();
+  if (currentPage === 'fiscalizacao')     renderFiscalizacoes();
+  if (currentPage === 'dashboard')        renderDashboard();
+}
+
+// ═══════════════════════════════════════════════════════
+// PÁGINA FISCALIZAÇÕES
+// ═══════════════════════════════════════════════════════
+function setFiscFilter(v) {
+  fiscFilter = v;
+  document.querySelectorAll('#page-fiscalizacao .filter-chip').forEach(c => {
+    const map = { '':'Todos', fiscalizado:'Fiscalizado', pendente:'Pendente', irregular:'Irregular' };
+    c.classList.toggle('active', c.textContent.trim().includes(map[v]||''));
+  });
+  renderFiscRegistros();
+}
+
+function resetFiscFilters() {
+  fiscFilter = '';
+  fiscSort   = 'recentes';
+  const si = document.getElementById('searchFisc');
+  if (si) si.value = '';
+  const ss = document.getElementById('fiscSortSelect');
+  if (ss) ss.value = 'recentes';
+  setFiscFilter('');
+}
+
+function resetFiscEstabFilters() {
+  fiscEstabFilters = { q: '', bairro: '', categoria: '', risco: '', status: '' };
+  fiscEstabSort    = 'az';
+  const si = document.getElementById('searchFiscEstab');
+  if (si) si.value = '';
+  ['fiscEstabFilterBairro','fiscEstabFilterCategoria','fiscEstabFilterRisco','fiscEstabFilterStatus'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  const ss = document.getElementById('fiscEstabSortSelect');
+  if (ss) ss.value = 'az';
+  fiscEstabPage = 1;
+  renderFiscEstabs();
+}
+
+function resetEstabFilters() {
+  filters = { q: '', bairro: '', categoria: '', risco: '' };
+  const si = document.getElementById('searchInput');
+  if (si) { si.value = ''; document.getElementById('searchClear').style.display = 'none'; }
+  ['filterBairro','filterCategoria','filterRisco'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  currentEstabPage = 1;
+  renderTable();
+}
+
+function openEditFisc(estabId, idx) {
+  const ins = getInspections();
+  const key = insKey(estabId);
+  const rec = ins[key]?.[idx];
+  if (!rec) return;
+  const estab = DADOS.find(d => d.id === estabId);
+  _editFiscId  = estabId;
+  _editFiscIdx = idx;
+  document.getElementById('editFiscNomeLabel').textContent = estab ? estab.nome_fantasia : 'ID '+estabId;
+  document.getElementById('editFiscDate').value   = rec.date || '';
+  document.getElementById('editFiscStatus').value = rec.status || 'fiscalizado';
+  document.getElementById('editFiscObs').value    = rec.obs || '';
+  const agents = getAgents();
+  const sel = document.getElementById('editFiscAgent');
+  if (!agents.length) {
+    sel.innerHTML = '<option value="">⚠️ Cadastre equipes em Configurações</option>';
+  } else {
+    sel.innerHTML = '<option value="">Selecionar equipe...</option>' +
+      agents.map(a => `<option value="${esc(a.name)}"${a.name===rec.agent?' selected':''}>${esc(a.name)}${a.role?' — '+esc(a.role):''}</option>`).join('');
+  }
+  if (!agents.length || !agents.find(a=>a.name===rec.agent)) {
+    // If the original agent isn't in the list, add it as custom option
+    if (rec.agent) {
+      sel.innerHTML += `<option value="${esc(rec.agent)}" selected>${esc(rec.agent)}</option>`;
+    }
+  }
+  openModal('modalEditFisc');
+}
+
+function saveEditFisc() {
+  const date   = document.getElementById('editFiscDate').value;
+  const agent  = document.getElementById('editFiscAgent').value;
+  const status = document.getElementById('editFiscStatus').value;
+  const obs    = document.getElementById('editFiscObs').value.trim();
+  if (!date)  { showToast('Informe a data da vistoria!','error'); return; }
+  if (!agent) { showToast('Selecione a equipe responsável!','error'); return; }
+  const ins = getInspections();
+  const key = insKey(_editFiscId);
+  if (!ins[key]?.[_editFiscIdx]) { showToast('Registro não encontrado.','error'); return; }
+  ins[key][_editFiscIdx] = { ...ins[key][_editFiscIdx], date, agent, status, obs, editedAt: new Date().toISOString() };
+  saveInspections(ins);
+  closeModal('modalEditFisc');
+  showToast('Fiscalização atualizada! ✅','success');
+  updateTopBadges();
+  if (currentPage === 'fiscalizacao')     renderFiscalizacoes();
+  if (currentPage === 'estabelecimentos') renderTable();
+  if (currentPage === 'dashboard')        renderDashboard();
+}
+
+function deleteInspect(estabId, idx) {
+  const ins   = getInspections();
+  const key   = insKey(estabId);
+  const rec   = ins[key]?.[idx];
+  const estab = DADOS.find(d => d.id === estabId);
+  _editFiscId  = estabId;
+  _editFiscIdx = idx;
+  const nomeFisc = (estab ? estab.nome_fantasia : 'ID '+estabId) + (rec ? ' — ' + formatDate(rec.date) : '');
+  document.getElementById('delFiscNomeLabel').textContent = nomeFisc;
+  openModal('modalConfirmDelFisc');
+}
+
+function confirmDeleteFisc() {
+  const ins = getInspections();
+  const key = insKey(_editFiscId);
+  if (!ins[key]) { closeModal('modalConfirmDelFisc'); return; }
+  ins[key].splice(_editFiscIdx, 1);
+  if (!ins[key].length) delete ins[key];
+  saveInspections(ins);
+  closeModal('modalConfirmDelFisc');
+  showToast('Fiscalização excluída.','success');
+  updateTopBadges();
+  if (currentPage === 'fiscalizacao')     renderFiscalizacoes();
+  if (currentPage === 'estabelecimentos') renderTable();
+  if (currentPage === 'dashboard')        renderDashboard();
+  _editFiscId = null; _editFiscIdx = null;
+}
+
+function renderFiscalizacoes() {
+  renderFiscEstabs();
+  renderFiscRegistros();
+}
+
+// ─── TABELA DE ESTABELECIMENTOS NA ABA FISCALIZAÇÃO ──────
+function renderFiscEstabs() {
+  const data = filteredFiscEstabs();
+  const total = data.length;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  if (fiscEstabPage > totalPages) fiscEstabPage = totalPages;
+  const slice = data.slice((fiscEstabPage - 1) * PAGE_SIZE, fiscEstabPage * PAGE_SIZE);
+
+  const countEl = document.getElementById('fiscEstabCount');
+  if (countEl) countEl.textContent = total + ' estabelecimento' + (total !== 1 ? 's' : '');
+
+  const tbody = document.getElementById('fiscEstabTableBody');
+  if (!tbody) return;
+  if (!slice.length) {
+    tbody.innerHTML = `<tr><td colspan="8">
+      <div class="empty-state">
+        <div class="icon">🏪</div>
+        <h3>Nenhum estabelecimento encontrado</h3>
+        <p>Tente outros termos ou filtros.</p>
+      </div></td></tr>`;
+  } else {
+    tbody.innerHTML = slice.map(r => {
+      const st = getStatusFor(r.id);
+      return `<tr>
+        <td><div class="td-nome">${esc(r.nome_fantasia)}</div></td>
+        <td><div class="td-razao">${esc(r.razao_social)}</div></td>
+        <td><div class="td-end">${esc(r.endereco)}</div></td>
+        <td><span class="badge badge-bairro">${esc(r.bairro)}</span></td>
+        <td>${r.categoria ? '<span class="badge badge-cat">'+esc(r.categoria)+'</span>'
+                          : '<span style="color:var(--text-muted);font-size:12px">—</span>'}</td>
+        <td>${riskBadge(r.classe_risco)}</td>
+        <td>${statusBadge(st)}</td>
+        <td><div class="td-actions">
+          <button class="action-btn view"    onclick="openDetail(${r.id})"  title="Ver detalhes">👁️</button>
+          <button class="action-btn inspect" onclick="openInspect(${r.id})" title="Fiscalizar">🔍</button>
+        </div></td>
+      </tr>`;
+    }).join('');
+  }
+
+  const info = document.getElementById('fiscEstabPaginationInfo');
+  const btns = document.getElementById('fiscEstabPaginationBtns');
+  if (!info || !btns) return;
+  const from = total === 0 ? 0 : (fiscEstabPage - 1) * PAGE_SIZE + 1;
+  const to   = Math.min(fiscEstabPage * PAGE_SIZE, total);
+  info.textContent = `Mostrando ${from}–${to} de ${total}`;
+  let bHtml = `<button class="page-btn" onclick="goFiscEstabPage(${fiscEstabPage-1})" ${fiscEstabPage===1?'disabled':''}>‹</button>`;
+  getPageRange(fiscEstabPage, totalPages).forEach(p => {
+    if (p === '...') bHtml += `<button class="page-btn" disabled>…</button>`;
+    else bHtml += `<button class="page-btn ${p===fiscEstabPage?'active':''}" onclick="goFiscEstabPage(${p})">${p}</button>`;
+  });
+  bHtml += `<button class="page-btn" onclick="goFiscEstabPage(${fiscEstabPage+1})" ${fiscEstabPage===totalPages?'disabled':''}>›</button>`;
+  btns.innerHTML = bHtml;
+}
+
+function goFiscEstabPage(p) {
+  const tp = Math.max(1, Math.ceil(filteredFiscEstabs().length / PAGE_SIZE));
+  if (p < 1 || p > tp) return;
+  fiscEstabPage = p;
+  renderFiscEstabs();
+}
+
+// ─── REGISTRO DE FISCALIZAÇÕES ──────────────────────────
+function renderFiscRegistros() {
+  const ins = getInspections();
+  const q   = (document.getElementById('searchFisc')?.value||'').toLowerCase().trim();
+  let rows  = [];
+  Object.entries(ins).forEach(([key, recs]) => {
+    const numId = Number(key);
+    const estab = DADOS.find(d => d.id === numId) || null;
+    recs.forEach((rec, idx) => rows.push({ estab, rec, id: numId, idx }));
+  });
+  if (fiscFilter) rows = rows.filter(r => r.rec.status === fiscFilter);
+  if (q) rows = rows.filter(r => {
+    const hay = [r.estab?.nome_fantasia||'', r.rec.agent||'', r.estab?.bairro||'', r.rec.obs||''].join(' ').toLowerCase();
+    return hay.includes(q);
+  });
+  // Ordenação dinâmica
+  if (fiscSort === 'az') {
+    rows.sort((a, b) => (a.estab?.nome_fantasia||'').localeCompare(b.estab?.nome_fantasia||'', 'pt-BR'));
+  } else {
+    // 'recentes': mais recentes primeiro (padrão)
+    rows.sort((a, b) => (b.rec.date||'').localeCompare(a.rec.date||''));
+  }
+  document.getElementById('fiscCount').textContent = rows.length + ' registro'+(rows.length!==1?'s':'');
+  const tbody = document.getElementById('fiscTableBody');
+  const empty = document.getElementById('fiscEmpty');
+  if (!rows.length) {
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+  } else {
+    empty.style.display = 'none';
+    tbody.innerHTML = rows.map(({estab,rec,id,idx}) => `<tr>
+      <td><div class="td-nome">${esc(estab?.nome_fantasia||'ID '+id)}</div></td>
+      <td><span class="badge badge-bairro">${esc(estab?.bairro||'—')}</span></td>
+      <td>${formatDate(rec.date)}</td>
+      <td>👥 ${esc(rec.agent)}</td>
+      <td>${statusBadge(rec.status)}</td>
+      <td style="max-width:200px;font-size:12px;color:var(--text-light)">${esc(rec.obs)||'—'}</td>
+      <td><div class="td-actions">
+        <button class="action-btn view"  onclick="openDetail(${id})"            title="Ver detalhes">👁️</button>
+        <button class="action-btn edit"  onclick="openEditFisc(${id},${idx})"   title="Editar">✏️</button>
+        <button class="action-btn del"   onclick="deleteInspect(${id},${idx})"  title="Excluir">🗑️</button>
+      </div></td>
+    </tr>`).join('');
+  }
+}
+
+// ─── TABELA DE INATIVOS ──────────────────────────────────
+function renderInativos() {
+  const data = filteredDataInativos();
+  const total = data.length;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  if (currentInativosPage > totalPages) currentInativosPage = totalPages;
+  const slice = data.slice((currentInativosPage - 1) * PAGE_SIZE, currentInativosPage * PAGE_SIZE);
+
+  const countEl = document.getElementById('inativosCount');
+  if (countEl) countEl.textContent = total + ' resultado' + (total !== 1 ? 's' : '');
+
+  const tbody = document.getElementById('inativosTableBody');
+  if (!tbody) return;
+  if (!slice.length) {
+    tbody.innerHTML = `<tr><td colspan="8">
+      <div class="empty-state">
+        <div class="icon">🚫</div>
+        <h3>Nenhum estabelecimento inativo</h3>
+        <p>Todos os estabelecimentos estão ativos.</p>
+      </div></td></tr>`;
+  } else {
+    tbody.innerHTML = slice.map(r => `<tr>
+      <td><div class="td-nome">${esc(r.nome_fantasia)}</div></td>
+      <td><div class="td-razao">${esc(r.razao_social)}</div></td>
+      <td><div class="td-end">${esc(r.endereco)}</div></td>
+      <td><span class="badge badge-bairro">${esc(r.bairro)}</span></td>
+      <td>${r.categoria ? '<span class="badge badge-cat">'+esc(r.categoria)+'</span>'
+                        : '<span style="color:var(--text-muted);font-size:12px">—</span>'}</td>
+      <td>${riskBadge(r.classe_risco)}</td>
+      <td><span class="badge badge-inativo">🚫 Inativo</span></td>
+      <td><div class="td-actions">
+        <button class="action-btn view"    onclick="openDetail(${r.id})"  title="Ver detalhes">👁️</button>
+        <button class="action-btn activate" onclick="toggleEstab(${r.id})" title="Ativar estabelecimento">✅</button>
+        <button class="action-btn edit"    onclick="openEdit(${r.id})"    title="Editar">✏️</button>
+      </div></td>
+    </tr>`).join('');
+  }
+
+  const info = document.getElementById('inativosPaginationInfo');
+  const btns = document.getElementById('inativosPaginationBtns');
+  if (!info || !btns) return;
+  const from = total === 0 ? 0 : (currentInativosPage - 1) * PAGE_SIZE + 1;
+  const to   = Math.min(currentInativosPage * PAGE_SIZE, total);
+  info.textContent = `Mostrando ${from}–${to} de ${total}`;
+  let bHtml = `<button class="page-btn" onclick="goInativosPage(${currentInativosPage-1})" ${currentInativosPage===1?'disabled':''}>‹</button>`;
+  getPageRange(currentInativosPage, totalPages).forEach(p => {
+    if (p === '...') bHtml += `<button class="page-btn" disabled>…</button>`;
+    else bHtml += `<button class="page-btn ${p===currentInativosPage?'active':''}" onclick="goInativosPage(${p})">${p}</button>`;
+  });
+  bHtml += `<button class="page-btn" onclick="goInativosPage(${currentInativosPage+1})" ${currentInativosPage===totalPages?'disabled':''}>›</button>`;
+  btns.innerHTML = bHtml;
+}
+
+function goInativosPage(p) {
+  const tp = Math.max(1, Math.ceil(filteredDataInativos().length / PAGE_SIZE));
+  if (p < 1 || p > tp) return;
+  currentInativosPage = p;
+  renderInativos();
+}
+
+// ─── TOGGLE ATIVO/INATIVO ────────────────────────────────
+let _pendingDeactivateId = null;
+
+function toggleEstab(id) {
+  const disabled = isDisabled(id);
+  if (disabled) {
+    // Reativação: remove da lista de inativos no Firestore e do disabled
+    const list = getDisabledIds();
+    const idx  = list.map(String).indexOf(String(id));
+    if (idx >= 0) list.splice(idx, 1);
+    saveDisabledIds(list);
+
+    // Remove da coleção de inativos
+    const listaInativos = getInativosData().filter(x => String(x.id) !== String(id));
+    saveInativosData(listaInativos);
+
+    showToast('Estabelecimento ativado! ✅','success');
+    refreshAfterChange();
+  } else {
+    // Desativação: pede confirmação
+    const r = DADOS.find(d => d.id === id);
+    _pendingDeactivateId = id;
+    document.getElementById('delNomeLabel').textContent = r ? r.nome_fantasia : 'ID ' + id;
+    openModal('modalConfirmDel');
+  }
+}
+
+async function confirmDeactivate() {
+  if (_pendingDeactivateId === null) return;
+  const id = _pendingDeactivateId;
+
+  // Move o registro completo para a coleção de inativos no Firestore
+  const r = DADOS.find(d => d.id === id);
+  if (r) {
+    const lista = getInativosData();
+    if (!lista.some(x => String(x.id) === String(id))) {
+      lista.push({ ...r, desativadoEm: new Date().toISOString() });
+      await saveInativosData(lista);
+    }
+  }
+
+  // Mantém o ID na lista disabled (usada para filtros em memória)
+  const list = getDisabledIds();
+  list.push(id);
+  saveDisabledIds(list);
+  closeModal('modalConfirmDel');
+  const rec = DADOS.find(d => d.id === id);
+  showToast((rec ? rec.nome_fantasia : 'Estabelecimento') + ' desativado.', 'success');
+  _pendingDeactivateId = null;
+  refreshAfterChange();
+}
+
+// ═══════════════════════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════════════════════
+function renderDashboard() {
+  const activeData   = DADOS.filter(r => !isDisabled(r.id));
+  const inativoCount = DADOS.filter(r =>  isDisabled(r.id)).length;
+  let fiscTotal=0, regTotal=0;
+  activeData.forEach(r => {
+    const st = getStatusFor(r.id);
+    if (st !== 'pendente') fiscTotal++;
+    if (st === 'fiscalizado') regTotal++;
+  });
+  document.getElementById('statTotal').textContent       = activeData.length;
+  document.getElementById('statFiscalizado').textContent = fiscTotal;
+  document.getElementById('statRegular').textContent     = regTotal;
+  document.getElementById('statPendente').textContent    = activeData.length - fiscTotal;
+  document.getElementById('statInativos').textContent    = inativoCount;
+  updateTopBadges();
+
+  // Bairros
+  const bairros = {};
+  activeData.forEach(r => { const k=r.bairro||'Não informado'; bairros[k]=(bairros[k]||0)+1; });
+  const bMax = Math.max(1,...Object.values(bairros));
+  document.getElementById('bairroChart').innerHTML =
+    Object.entries(bairros).sort((a,b)=>b[1]-a[1]).map(([name,cnt])=>`
+      <div class="bar-item">
+        <div class="bar-label"><span>${esc(name)}</span><span>${cnt}</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width:${(cnt/bMax*100).toFixed(1)}%"></div></div>
+      </div>`).join('');
+
+  // Risco
+  const riscos = {'BAIXO RISCO':0,'ALTO RISCO':0,'Não informado':0};
+  activeData.forEach(r => {
+    if      (r.classe_risco==='BAIXO RISCO') riscos['BAIXO RISCO']++;
+    else if (r.classe_risco==='ALTO RISCO')  riscos['ALTO RISCO']++;
+    else                                      riscos['Não informado']++;
+  });
+  const rColors = {'BAIXO RISCO':'#6bcb8b','ALTO RISCO':'#e05a6b','Não informado':'#ddc5cc'};
+  document.getElementById('riscoChart').innerHTML =
+    Object.entries(riscos).map(([name,cnt])=>
+      `<div class="pie-row"><div class="pie-dot" style="background:${rColors[name]}"></div>
+       <div class="pie-name">${name}</div><div class="pie-val">${cnt}</div></div>`).join('');
+
+  // Categorias Top 8 — normaliza para maiúsculo para evitar contagens duplicadas
+  const cats = {};
+  activeData.forEach(r => {
+    if (r.categoria && r.categoria.trim()) {
+      const cat = r.categoria.trim().toUpperCase();
+      cats[cat] = (cats[cat] || 0) + 1;
+    }
+  });
+  const topCats = Object.entries(cats).sort((a,b) => b[1] - a[1]).slice(0, 8);
+  const cMax    = topCats.length ? topCats[0][1] : 1;
+  document.getElementById('catChart').innerHTML =
+    topCats.length ? topCats.map(([name, cnt]) => `
+      <div class="bar-item">
+        <div class="bar-label"><span style="font-size:12px">${esc(name)}</span><span>${cnt}</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width:${Math.round(cnt / cMax * 100)}%"></div></div>
+      </div>`).join('')
+    : '<div style="color:var(--text-muted);font-size:13px;padding:10px">Nenhuma categoria cadastrada.</div>';
+
+  // Vencimentos próximos 60d
+  const now=new Date(); now.setHours(0,0,0,0);
+  const future=new Date(); future.setDate(future.getDate()+60);
+  const soon = activeData.filter(r => {
+    if (!r.ultimo_licenciamento) return false;
+    const d = new Date(r.ultimo_licenciamento+'T00:00:00');
+    return d>=now && d<=future;
+  }).sort((a,b)=>a.ultimo_licenciamento.localeCompare(b.ultimo_licenciamento)).slice(0,5);
+
+  document.getElementById('vencimentoList').innerHTML = soon.length
+    ? soon.map(r=>`
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
+          <div>
+            <div style="font-weight:600;font-size:13px">${esc(r.nome_fantasia)}</div>
+            <div style="font-size:11px;color:var(--text-muted)">${esc(r.bairro)}</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:13px;font-weight:700;color:var(--warning)">${formatDate(r.ultimo_licenciamento)}</div>
+            <div style="font-size:11px;color:var(--text-muted)">${daysUntil(r.ultimo_licenciamento)} dias</div>
+          </div>
+        </div>`).join('')
+    : '<div style="text-align:center;color:var(--text-muted);font-size:13px;padding:20px">Nenhum vencimento nos próximos 60 dias</div>';
+}
+
+// ─── RELATÓRIO PARA IMPRESSÃO ─────────────────────────
+
+// ─── PRINT HELPER ─────────────────────────────────────
+function _openPrintWindow(title, subtitle, htmlContent) {
+  document.getElementById('printModalTitle').textContent = '\uD83D\uDDA8\uFE0F ' + title;
+  document.getElementById('printModalSub').textContent   = subtitle;
+  document.getElementById('printContent').innerHTML      = htmlContent;
+  openModal('printPreviewModal');
+}
+
+function _printStyles() {
+  return `* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:'DM Sans',sans-serif; color:#1a1a2e; background:#fff; padding:8px; font-size:8.5px; }
+.print-header { background:#f48aab; color:white; padding:8px 14px; display:flex; align-items:center; justify-content:space-between; gap:14px; border-radius:7px 7px 0 0; }
+.print-header h1 { font-family:'Playfair Display',serif; font-size:13px; font-weight:700; line-height:1.2; }
+.print-header > div:first-child > div:first-child { font-size:8px; opacity:.85; letter-spacing:.6px; text-transform:uppercase; }
+.print-header > div:first-child > div:last-child { font-size:9px; opacity:.9; margin-top:1px; }
+.print-meta { font-size:8.5px; opacity:.9; text-align:right; white-space:nowrap; }
+.print-body { padding:10px 14px; }
+.print-section-title { font-family:'Playfair Display',serif; font-size:10.5px; border-bottom:1.5px solid #f48aab; padding-bottom:3px; margin:9px 0 6px; color:#f48aab; }
+.print-summary { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-bottom:10px; }
+.print-stat { background:#fde8ee; border:1px solid #f5c6d4; border-radius:5px; padding:6px 5px; text-align:center; }
+.pv { font-family:'Playfair Display',serif; font-size:16px; font-weight:900; color:#f48aab; line-height:1; }
+.pl { font-size:7.5px; color:#b08090; font-weight:600; text-transform:uppercase; letter-spacing:.4px; margin-top:2px; }
+table { width:100%; border-collapse:collapse; font-size:8px; }
+thead tr { background:#f48aab; color:white; }
+th { padding:4px 5px; text-align:left; font-weight:700; font-size:7.5px; letter-spacing:.3px; text-transform:uppercase; white-space:nowrap; }
+td { padding:3.5px 5px; border-bottom:1px solid #fae8f0; vertical-align:middle; font-size:8px; }
+tr:nth-child(even) td { background:#fff5f8; }
+.print-footer { margin-top:16px; display:grid; grid-template-columns:1fr 1fr; gap:20px; border-top:1.5px solid #eee; padding-top:12px; page-break-inside:avoid; break-inside:avoid; }
+.sign-line { border-top:1px solid #333; margin-top:26px; padding-top:4px; font-size:8.5px; color:#555; text-align:center; }
+@media print { body { padding:0; } @page { size: landscape; margin:5mm; } .print-footer { page-break-inside:avoid; break-inside:avoid; } }`;
+}
+
+// ─── IMPRIMIR ESTABELECIMENTOS ────────────────────────
+function imprimirEstabelecimentos() {
+  const data = filteredData();
+  if (!data.length) { showToast('Nenhum estabelecimento para imprimir!','error'); return; }
+  const now     = new Date();
+  const dateStr = now.toLocaleDateString('pt-BR');
+  const timeStr = now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  let cFisc=0, cPend=0, cIrreg=0;
+  data.forEach(r => {
+    const st = getStatusFor(r.id);
+    if (st==='fiscalizado') cFisc++; else if (st==='irregular') cIrreg++; else cPend++;
+  });
+  const bairroAtivo = filters.bairro||'Todos';
+  const catAtiva    = filters.categoria||'Todas';
+  const riscoAtivo  = filters.risco||'Todos';
+  const statusAtivo = filters.status||'Todos';
+  const rows = data.map((r,i) => {
+    const st   = getStatusFor(r.id);
+    const last = getLastInspection(r.id);
+    const stTxt   = {fiscalizado:'Fiscalizado',pendente:'Pendente',irregular:'Irregular'}[st]||st;
+    const stColor = {fiscalizado:'#2a6e47',pendente:'#7a4e00',irregular:'#c0392b'}[st]||'#333';
+    const stBg    = {fiscalizado:'#e8f8ee',pendente:'#fff4e0',irregular:'#fdeef0'}[st]||'#f5f5f5';
+    return `<tr>
+      <td style="text-align:center;font-weight:600">${i+1}</td>
+      <td style="font-weight:600">${esc(r.nome_fantasia)}</td>
+      <td style="font-size:11px;color:#555">${esc(r.razao_social)||'&mdash;'}</td>
+      <td style="font-size:11px;color:#555;max-width:120px">${esc(r.endereco)||'&mdash;'}</td>
+      <td>${esc(r.bairro)||'&mdash;'}</td>
+      <td style="font-size:11px">${esc(r.categoria)||'&mdash;'}</td>
+      <td style="font-size:10px;color:#555;max-width:110px">${esc(r.tipo_atividade)||'&mdash;'}</td>
+      <td style="font-size:10px">${esc(r.cnae)||'&mdash;'}</td>
+      <td style="font-size:11px">${r.classe_risco?.includes('BAIXO')?'Baixo':r.classe_risco?.includes('ALTO')?'Alto':'&mdash;'}</td>
+      <td style="font-size:10px;color:#555">${esc(r.orgao_licenciador)||'&mdash;'}</td>
+      <td style="font-size:11px">${r.ultimo_licenciamento?formatDate(r.ultimo_licenciamento):'&mdash;'}</td>
+      <td><span style="display:inline-block;padding:2px 8px;border-radius:50px;font-size:10px;font-weight:700;background:${stBg};color:${stColor}">${stTxt}</span></td>
+      <td style="font-size:11px">${last?formatDate(last.date):'&mdash;'}</td>
+      <td style="font-size:10px;color:#555">${last?esc(last.agent):'&mdash;'}</td>
+    </tr>`;
+  }).join('');
+  const html = `
+    <div class="print-header">
+      <div>
+        <div style="font-size:12px;opacity:.85;margin-bottom:4px;letter-spacing:1px;text-transform:uppercase">Prefeitura Municipal de Careiro — AM</div>
+        <h1>VISA Careiro</h1>
+        <div style="font-size:13px;opacity:.9;margin-top:4px">Vigilância Sanitária — Lista de Estabelecimentos</div>
+      </div>
+      <div class="print-meta"><div><strong>Data:</strong> ${dateStr} &nbsp;|&nbsp; <strong>Hora:</strong> ${timeStr}</div></div>
+    </div>
+    <div class="print-body">
+      <div style="background:#f9f9f9;border:1px solid #eee;border-radius:8px;padding:12px 16px;margin-bottom:20px;font-size:12px;color:#555">
+        <strong style="color:#333">Filtros:</strong>
+        Localidade: <strong>${bairroAtivo}</strong> | Categoria: <strong>${catAtiva}</strong> | Risco: <strong>${riscoAtivo}</strong> | Status: <strong>${statusAtivo}</strong>
+      </div>
+      <div class="print-section-title">📊 Resumo</div>
+      <div class="print-summary">
+        <div class="print-stat"><div class="pv">${data.length}</div><div class="pl">Total</div></div>
+        <div class="print-stat"><div class="pv" style="color:#2a6e47">${cFisc}</div><div class="pl">Fiscalizados</div></div>
+        <div class="print-stat"><div class="pv" style="color:#c0392b">${cIrreg}</div><div class="pl">Irregulares</div></div>
+        <div class="print-stat"><div class="pv" style="color:#7a4e00">${cPend}</div><div class="pl">Pendentes</div></div>
+      </div>
+      <div class="print-section-title">🏪 Estabelecimentos</div>
+      <table>
+        <thead><tr><th style="width:28px">#</th><th>Nome Fantasia</th><th>Razão Social</th><th>Endereço</th><th>Localidade</th><th>Categoria</th><th>Tipo Atividade</th><th>CNAE</th><th>Risco</th><th>Órgão Lic.</th><th>Licenciamento</th><th>Status</th><th>Últ. Vistoria</th><th>Equipe Fiscal</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <div class="print-footer">
+        <div><div style="font-size:12px;color:#555;margin-bottom:32px">Responsável pela Emissão:</div><div class="sign-line">Chefe da Vigilância Sanitária Municipal</div></div>
+        <div><div style="font-size:12px;color:#555;margin-bottom:32px">Servidor Responsável:</div><div class="sign-line">Equipe / Fiscal Sanitário</div></div>
+      </div>
+      <div style="margin-top:16px;padding:8px 12px;background:#f9f9f9;border-radius:6px;font-size:9px;color:#888;text-align:center">VISA Careiro — ${dateStr} às ${timeStr} — ${data.length} estabelecimentos</div>
+    </div>`;
+  _openPrintWindow('Lista de Estabelecimentos', data.length + ' estabelecimentos', html);
+}
+
+// ─── IMPRIMIR FISCALIZAÇÕES ───────────────────────────
+function imprimirFiscalizacoes() {
+  const ins = getInspections();
+  const q   = (document.getElementById('searchFisc')?.value||'').toLowerCase().trim();
+  let rows  = [];
+  Object.entries(ins).forEach(([key,recs]) => {
+    const numId = Number(key);
+    const estab = DADOS.find(d => d.id === numId)||null;
+    recs.forEach(rec => rows.push({estab,rec,id:numId}));
+  });
+  if (fiscFilter) rows = rows.filter(r => r.rec.status === fiscFilter);
+  if (q) rows = rows.filter(r => {
+    const hay = [r.estab?.nome_fantasia||'',r.rec.agent||'',r.estab?.bairro||'',r.rec.obs||''].join(' ').toLowerCase();
+    return hay.includes(q);
+  });
+  rows.sort((a,b)=>(b.rec.date||'').localeCompare(a.rec.date||''));
+  if (!rows.length) { showToast('Nenhuma fiscalização para imprimir!','error'); return; }
+  const now     = new Date();
+  const dateStr = now.toLocaleDateString('pt-BR');
+  const timeStr = now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  let cFisc=0, cPend=0, cIrreg=0;
+  rows.forEach(r => {
+    if (r.rec.status==='fiscalizado') cFisc++;
+    else if (r.rec.status==='irregular') cIrreg++;
+    else cPend++;
+  });
+  const tableRows = rows.map((item,i) => {
+    const {estab,rec,id} = item;
+    const stTxt   = {fiscalizado:'Fiscalizado',pendente:'Pendente',irregular:'Irregular'}[rec.status]||rec.status;
+    const stColor = {fiscalizado:'#2a6e47',pendente:'#7a4e00',irregular:'#c0392b'}[rec.status]||'#333';
+    const stBg    = {fiscalizado:'#e8f8ee',pendente:'#fff4e0',irregular:'#fdeef0'}[rec.status]||'#f5f5f5';
+    return `<tr>
+      <td style="text-align:center;font-weight:600">${i+1}</td>
+      <td style="font-weight:600">${esc(estab?.nome_fantasia||'ID '+id)}</td>
+      <td>${esc(estab?.bairro||'&mdash;')}</td>
+      <td>${formatDate(rec.date)}</td>
+      <td>${esc(rec.agent)}</td>
+      <td><span style="display:inline-block;padding:2px 8px;border-radius:50px;font-size:10px;font-weight:700;background:${stBg};color:${stColor}">${stTxt}</span></td>
+      <td style="font-size:10px;max-width:160px">${esc(rec.obs)||'&mdash;'}</td>
+    </tr>`;
+  }).join('');
+  const filterLabel = fiscFilter ? {fiscalizado:'Fiscalizado',pendente:'Pendente',irregular:'Irregular'}[fiscFilter] : 'Todos';
+  const html = `
+    <div class="print-header">
+      <div>
+        <div style="font-size:12px;opacity:.85;margin-bottom:4px;letter-spacing:1px;text-transform:uppercase">Prefeitura Municipal de Careiro — AM</div>
+        <h1>VISA Careiro</h1>
+        <div style="font-size:13px;opacity:.9;margin-top:4px">Vigilância Sanitária — Registro de Fiscalizações</div>
+      </div>
+      <div class="print-meta"><div><strong>Data:</strong> ${dateStr} &nbsp;|&nbsp; <strong>Hora:</strong> ${timeStr}</div></div>
+    </div>
+    <div class="print-body">
+      <div style="background:#f9f9f9;border:1px solid #eee;border-radius:8px;padding:12px 16px;margin-bottom:20px;font-size:12px;color:#555">
+        <strong style="color:#333">Filtro de status:</strong> <strong>${filterLabel}</strong>${q?' | Busca: <strong>"'+q+'"</strong>':''}
+      </div>
+      <div class="print-section-title">📊 Resumo</div>
+      <div class="print-summary">
+        <div class="print-stat"><div class="pv">${rows.length}</div><div class="pl">Total</div></div>
+        <div class="print-stat"><div class="pv" style="color:#2a6e47">${cFisc}</div><div class="pl">Fiscalizados</div></div>
+        <div class="print-stat"><div class="pv" style="color:#c0392b">${cIrreg}</div><div class="pl">Irregulares</div></div>
+        <div class="print-stat"><div class="pv" style="color:#7a4e00">${cPend}</div><div class="pl">Pendentes</div></div>
+      </div>
+      <div class="print-section-title">📋 Fiscalizações</div>
+      <table>
+        <thead><tr><th style="width:32px">#</th><th>Estabelecimento</th><th>Localidade</th><th>Data</th><th>Equipe</th><th>Status</th><th>Observação</th></tr></thead>
+        <tbody>${tableRows}</tbody>
+      </table>
+      <div class="print-footer">
+        <div><div style="font-size:12px;color:#555;margin-bottom:32px">Responsável pela Emissão:</div><div class="sign-line">Chefe da Vigilância Sanitária Municipal</div></div>
+        <div><div style="font-size:12px;color:#555;margin-bottom:32px">Servidor Responsável:</div><div class="sign-line">Equipe / Fiscal Sanitário</div></div>
+      </div>
+      <div style="margin-top:24px;padding:12px;background:#f9f9f9;border-radius:8px;font-size:11px;color:#888;text-align:center">VISA Careiro — ${dateStr} às ${timeStr} — ${rows.length} registros</div>
+    </div>`;
+  _openPrintWindow('Fiscalizações', rows.length + ' registros', html);
+}
+
+function executarImpressao() {
+  const content = document.getElementById('printContent').innerHTML;
+  const printWin = window.open('','_blank','width=1200,height=800,menubar=no,toolbar=no,scrollbars=yes');
+  printWin.document.write(`<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>VISA Careiro</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>${_printStyles()}</style>
+</head>
+<body>
+<div>${content}</div>
+<script>window.onload=function(){window.print();}<\/script>
+</body>
+</html>`);
+  printWin.document.close();
+}
+
+// ═══════════════════════════════════════════════════════
+// CONFIGURAÇÕES
+// ═══════════════════════════════════════════════════════
+function renderConfig() {
+  const cfg  = getConfig();
+  const togL = document.getElementById('togLicenca');
+  if (togL) togL.checked = cfg.licenca !== false;
+  renderAgents();
+  renderBairroTags();
+  updateConfigStats();
+}
+
+// ═══════════════════════════════════════════════════════
+// BAIRROS / DISTRITOS
+// ═══════════════════════════════════════════════════════
+function refreshAllBairroDropdowns() {
+  const bairros = getBairros();
+  const opts    = bairros.map(b => `<option value="${esc(b)}">${esc(b)}</option>`).join('');
+
+  // Filtro na página de estabelecimentos
+  const fb = document.getElementById('filterBairro');
+  if (fb) {
+    const cur = fb.value;
+    fb.innerHTML = '<option value="">Todas as localidades</option>' + opts;
+    if (cur) fb.value = cur;
+  }
+  // Filtro na página de fiscalização
+  const ff = document.getElementById('fiscEstabFilterBairro');
+  if (ff) {
+    const cur = ff.value;
+    ff.innerHTML = '<option value="">Todas as localidades</option>' + opts;
+    if (cur) ff.value = cur;
+  }
+  // Modal estab
+  const eb = document.getElementById('estBairro');
+  if (eb) {
+    const cur = eb.value;
+    eb.innerHTML = '<option value="">Selecionar...</option>' + opts;
+    if (cur) eb.value = cur;
+  }
+}
+
+function renderBairroTags() {
+  const list = document.getElementById('bairroTagList');
+  if (!list) return;
+  const bairros = getBairros();
+  if (!bairros.length) {
+    list.innerHTML = '<span style="font-size:13px;color:var(--text-muted)">Nenhuma localidade cadastrada.</span>';
+    return;
+  }
+  list.innerHTML = bairros.map((b, i) => `
+    <span class="bairro-tag">
+      📍 ${esc(b)}
+      <button onclick="removeBairro(${i})" title="Remover">✕</button>
+    </span>`).join('');
+}
+
+function addBairro() {
+  const input = document.getElementById('newBairroName');
+  const name  = input?.value.trim().toUpperCase();
+  if (!name) { showToast('Informe o nome da localidade!','error'); return; }
+  const bairros = getBairros();
+  if (bairros.some(b => b.toUpperCase() === name)) {
+    showToast('Localidade já cadastrada!','error'); return;
+  }
+  bairros.push(name);
+  saveBairros(bairros);
+  if (input) input.value = '';
+  renderBairroTags();
+  refreshAllBairroDropdowns();
+  showToast('Localidade adicionada! ✅','success');
+}
+
+let _pendingDelBairroIdx = null;
+
+function removeBairro(i) {
+  const bairros  = getBairros();
+  const nomeBairro = bairros[i];
+
+  // Verifica se algum estabelecimento usa esta localidade
+  const vinculados = DADOS.filter(d => d.bairro === nomeBairro).length;
+  if (vinculados > 0) {
+    showToast(
+      `Não é possível excluir: ${vinculados} estabelecimento${vinculados > 1 ? 's' : ''} vinculado${vinculados > 1 ? 's' : ''} a "${nomeBairro}".`,
+      'error'
+    );
+    return;
+  }
+
+  // Confirmar exclusão
+  _pendingDelBairroIdx = i;
+  document.getElementById('delBairroLabel').textContent = nomeBairro;
+  openModal('modalConfirmDelBairro');
+}
+
+function confirmRemoveBairro() {
+  const i = _pendingDelBairroIdx;
+  if (i === null) return;
+  const bairros = getBairros();
+  bairros.splice(i, 1);
+  saveBairros(bairros);
+  renderBairroTags();
+  refreshAllBairroDropdowns();
+  closeModal('modalConfirmDelBairro');
+  showToast('Localidade removida.', 'success');
+  _pendingDelBairroIdx = null;
+}
+
+function renderAgents() {
+  const agents = getAgents();
+  const list   = document.getElementById('agentList');
+  if (!list) return;
+  if (!agents.length) {
+    list.innerHTML = '<div style="text-align:center;color:var(--text-muted);font-size:13px;padding:20px">Nenhuma equipe cadastrada ainda.</div>';
+    return;
+  }
+  list.innerHTML = agents.map((a,i) => `
+    <div class="agent-item">
+      <div class="agent-avatar">👥</div>
+      <div>
+        <div class="agent-name">${esc(a.name)}</div>
+        <div class="agent-role">${esc(a.role)||'Equipe Fiscal'}</div>
+      </div>
+      <div class="agent-actions">
+        <button class="btn btn-danger btn-sm" onclick="removeAgent(${i})">🗑️</button>
+      </div>
+    </div>`).join('');
+}
+
+function addAgent() {
+  const name = document.getElementById('newAgentName').value.trim();
+  const role = document.getElementById('newAgentRole').value.trim();
+  if (!name) { showToast('Informe o nome da equipe!','error'); return; }
+  const agents = getAgents();
+  agents.push({ name, role: role||'Equipe Fiscal' });
+  saveAgents(agents);
+  document.getElementById('newAgentName').value = '';
+  document.getElementById('newAgentRole').value = '';
+  renderAgents();
+  showToast('Equipe adicionada! ✅','success');
+}
+
+function removeAgent(i) {
+  const agents = getAgents();
+  agents.splice(i,1);
+  saveAgents(agents);
+  renderAgents();
+  showToast('Equipe removida.','success');
+}
+
+function updateConfigStats() {
+  const ins     = getInspections();
+  const total   = Object.values(ins).reduce((acc,arr) => acc+(arr?.length||0), 0);
+  const estabs  = Object.keys(ins).length;
+  const custom  = getCustom().length;
+  const deleted = getDeletedIds().length;
+  const edited  = Object.keys(getEditedMap()).length;
+  const el      = document.getElementById('configStats');
+  if (el) el.innerHTML = `Sistema: <strong>${DADOS.length}</strong> estabelecimentos &nbsp;|&nbsp;
+    <strong>${total}</strong> fiscalizações em <strong>${estabs}</strong> estabs &nbsp;|&nbsp;
+    <span style="color:var(--success)">+${custom} adicionados</span> &nbsp;|&nbsp;
+    <span style="color:#3a7dc9">${edited} editados</span> &nbsp;|&nbsp;
+    <span style="color:var(--danger)">${deleted} excluídos</span>`;
+}
+
+// ═══════════════════════════════════════════════════════
+// RESTAURAR INATIVOS
+// ═══════════════════════════════════════════════════════
+function importInativos() {
+  document.getElementById('importInativosFile').click();
+}
+
+function doImportInativos(e) {
+  const file = e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+
+  readJSON(file, data => {
+    try {
+      // Aceita array direto ou objeto com chave "estabelecimentos"
+      let lista = Array.isArray(data)
+        ? data
+        : Array.isArray(data.estabelecimentos)
+          ? data.estabelecimentos
+          : null;
+
+      if (!lista) {
+        showToast('Formato inválido: o arquivo deve conter um array de estabelecimentos.', 'error');
+        return;
+      }
+
+      // Filtra entradas sem nome_fantasia
+      lista = lista.filter(r => r && r.nome_fantasia && r.nome_fantasia.trim());
+
+      if (!lista.length) {
+        showToast('Nenhum estabelecimento válido encontrado no arquivo.', 'error');
+        return;
+      }
+
+      const custom    = getCustom();
+      const disabled  = getDisabledIds();
+      const disabledSet = new Set(disabled.map(String));
+
+      let adicionados  = 0;
+      let jaInativos   = 0;
+      let jaAtivos     = 0;
+      let nomes_adicionados = [];
+
+      lista.forEach(item => {
+        const nomeNorm = item.nome_fantasia.trim().toUpperCase();
+
+        // Verifica se já existe em DADOS (base + custom)
+        const existente = DADOS.find(d =>
+          (d.nome_fantasia || '').trim().toUpperCase() === nomeNorm
+        );
+
+        if (existente) {
+          // Já existe: verifica seu status
+          if (disabledSet.has(String(existente.id))) {
+            // Já está inativo
+            jaInativos++;
+          } else {
+            // Já existe como ATIVO - não fazer nada (deixar ativo)
+            jaAtivos++;
+          }
+        } else {
+          // Não existe: cria novo registro no custom como inativo
+          const novoId = Date.now() + Math.floor(Math.random() * 100000);
+          const novo = {
+            id: novoId,
+            nome_fantasia:        item.nome_fantasia.trim(),
+            razao_social:         item.razao_social         || '',
+            endereco:             item.endereco             || '',
+            bairro:               item.bairro               || '',
+            categoria:            item.categoria            ? item.categoria.trim().toUpperCase() : '',
+            tipo_atividade:       item.tipo_atividade       ? item.tipo_atividade.trim().toUpperCase() : '',
+            cnae:                 item.cnae                 || '',
+            classe_risco:         item.classe_risco         || '',
+            ultimo_licenciamento: item.ultimo_licenciamento || '',
+            orgao_licenciador:    item.orgao_licenciador    || '',
+          };
+          custom.push(novo);
+          disabled.push(novoId);
+          disabledSet.add(String(novoId));
+          adicionados++;
+          nomes_adicionados.push(novo.nome_fantasia);
+        }
+      });
+
+      // Persiste as mudanças
+      saveCustom(custom);
+      saveDisabledIds(disabled);
+      rebuildDADOS();
+      refreshAllCategoryDropdowns();
+      refreshAfterChange();
+
+      // Exibe resultado detalhado na tela
+      const total = lista.length;
+      const resultEl = document.getElementById('importInativosResult');
+      let cor, icon;
+      if (adicionados > 0) { cor = 'var(--success-bg)'; icon = '✅'; }
+      else if (jaAtivos > 0 || jaInativos > 0) { cor = 'var(--warning-bg)'; icon = '⚠️'; }
+      else { cor = '#f0f4ff'; icon = 'ℹ️'; }
+
+      resultEl.style.display = 'block';
+      resultEl.style.background = cor;
+      resultEl.style.border = '1.5px solid ' + (adicionados > 0 ? 'var(--success)' : 'var(--amarelo-dark)');
+      resultEl.innerHTML = `
+        <div style="font-weight:700;font-size:14px;margin-bottom:8px">${icon} Importação concluída — ${total} registro${total!==1?'s':''} no arquivo</div>
+        <div style="display:grid;grid-template-columns:repeat(3,auto);gap:6px 24px;max-width:420px">
+          <div>📥 <strong>${adicionados}</strong> novo${adicionados!==1?'s':''} inserido${adicionados!==1?'s':''}</div>
+          <div>✔️ <strong>${jaAtivos}</strong> já existia${jaAtivos!==1?'m':''} ativo${jaAtivos!==1?'s':''}</div>
+          <div>🔄 <strong>${jaInativos}</strong> já estava${jaInativos!==1?'m':''} inativo${jaInativos!==1?'s':''}</div>
+        </div>
+        ${nomes_adicionados.length ? `
+          <div style="margin-top:10px;font-size:12px;color:var(--text-muted)">
+            Novos: ${nomes_adicionados.slice(0,8).map(n=>`<span style="background:rgba(0,0,0,0.06);padding:2px 7px;border-radius:50px;margin:2px 3px;display:inline-block">${esc(n)}</span>`).join('')}
+            ${nomes_adicionados.length > 8 ? `<span style="color:var(--text-muted)">…e mais ${nomes_adicionados.length-8}</span>` : ''}
+          </div>` : ''}
+      `;
+
+      showToast(`Inativos restaurados: ${adicionados} adicionado${adicionados!==1?'s':''}, ${jaAtivos} já ativo${jaAtivos!==1?'s':''}.`, 'success');
+
+    } catch(err) {
+      showToast('Erro ao processar o arquivo: ' + err.message, 'error');
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// BACKUP COMPLETO (inclui dados base)
+// ═══════════════════════════════════════════════════════
+function backupData() {
+  const disabledSet = new Set(getDisabledIds().map(String));
+  // Estabelecimentos base (apenas ativos — não contaminados por inativos)
+  const baseAtivos = _DADOS_ORIGINAL.filter(r => !disabledSet.has(String(r.id)));
+  // Inativos com dados completos (da coleção separada)
+  const inativos   = getInativosData();
+
+  const data = {
+    version: 3,
+    exportedAt: new Date().toISOString(),
+    // Dados operacionais (visa_state/app)
+    inspections: getInspections(),
+    agents:      getAgents(),
+    config:      getConfig(),
+    custom:      getCustom(),
+    deleted:     getDeletedIds(),
+    disabled:    getDisabledIds(),
+    edited:      getEditedMap(),
+    // Dados base APENAS dos ativos (visa_state/base_data)
+    estabelecimentos: baseAtivos,
+    // Dados dos inativos em seção separada (visa_state/inativos_data)
+    inativos_data: inativos
+  };
+  downloadJSON(data, 'backup_completo_visa_careiro_' + new Date().toISOString().slice(0,10) + '.json');
+  showToast('Backup completo exportado! ✅','success');
+}
+
+function importBackup() { document.getElementById('importFile').click(); }
+
+function doImport(e) {
+  const file = e.target.files[0]; e.target.value = '';
+  if (!file) return;
+  readJSON(file, async data => {
+    try {
+      const summary = {};
+
+      // ── Dados operacionais ──────────────────────────────────────
+      if (data.inspections) { saveInspections(data.inspections); summary.fiscalizacoes = Object.keys(data.inspections).length; }
+      if (data.agents)      { saveAgents(data.agents);           summary.agentes       = data.agents.length; }
+      if (data.config)      { _fbCache.config = data.config; _saveField('config', data.config); summary.config = true; }
+      if (data.custom)      saveCustom(data.custom);
+      if (data.deleted)     saveDeletedIds(data.deleted);
+      if (data.disabled)    saveDisabledIds(data.disabled);
+      if (data.edited)      saveEditedMap(data.edited);
+
+      // ── Estabelecimentos ATIVOS (base_data) ─────────────────────
+      if (Array.isArray(data.estabelecimentos) && data.estabelecimentos.length > 0) {
+        const disabledSet = new Set((data.disabled || []).map(String));
+        const apenasAtivos = data.estabelecimentos.filter(r => !disabledSet.has(String(r.id)));
+        await _BASE_REF.set({
+          estabelecimentos: apenasAtivos,
+          importedAt: new Date().toISOString(),
+          total: apenasAtivos.length
+        });
+        _DADOS_ORIGINAL.length = 0;
+        apenasAtivos.forEach(r => _DADOS_ORIGINAL.push(r));
+        summary.ativos = apenasAtivos.length;
+      }
+
+      // ── Estabelecimentos INATIVOS (inativos_data) ───────────────
+      if (Array.isArray(data.inativos_data) && data.inativos_data.length > 0) {
+        await saveInativosData(data.inativos_data);
+        summary.inativos = data.inativos_data.length;
+      }
+
+      rebuildDADOS();
+      refreshAllCategoryDropdowns();
+      renderConfig();
+      refreshAfterChange();
+
+      // ── Painel de resultado ─────────────────────────────────────
+      const resultEl = document.getElementById('backupImportResult');
+      if (resultEl) {
+        const rows = [
+          summary.ativos       != null ? `🏢 <strong>${summary.ativos}</strong> estabelecimento${summary.ativos!==1?'s':''} ativo${summary.ativos!==1?'s':''}` : null,
+          summary.inativos     != null ? `🚫 <strong>${summary.inativos}</strong> estabelecimento${summary.inativos!==1?'s':''} inativo${summary.inativos!==1?'s':''}` : null,
+          summary.fiscalizacoes!= null ? `📋 <strong>${summary.fiscalizacoes}</strong> registro${summary.fiscalizacoes!==1?'s':''} de fiscalização` : null,
+          summary.agentes      != null ? `👷 <strong>${summary.agentes}</strong> agente${summary.agentes!==1?'s':''}` : null,
+          summary.config               ? `⚙️ Configurações do sistema` : null,
+        ].filter(Boolean);
+        resultEl.style.display   = 'block';
+        resultEl.style.background = 'var(--success-bg)';
+        resultEl.style.border     = '1.5px solid var(--success)';
+        resultEl.innerHTML = `
+          <div style="font-weight:700;font-size:14px;margin-bottom:10px">✅ Backup importado com sucesso!</div>
+          <div style="display:flex;flex-direction:column;gap:5px">${rows.map(r=>`<div>${r}</div>`).join('')}</div>
+        `;
+      }
+
+      showToast('Backup universal restaurado com sucesso! ✅', 'success');
+    } catch(err) { showToast('Arquivo inválido: ' + err.message, 'error'); }
+  });
+}
+
+function clearAllFiscalizacoes() {
+  if (!confirm('Isso vai apagar TODAS as fiscalizações. Continuar?')) return;
+  saveInspections({});
+  updateTopBadges();
+  if (currentPage==='fiscalizacao') renderFiscalizacoes();
+  if (currentPage==='dashboard')    renderDashboard();
+  updateConfigStats();
+  showToast('Fiscalizações apagadas.','success');
+}
+
+
+function downloadJSON(obj, filename) {
+  downloadBlob(new Blob([JSON.stringify(obj,null,2)], { type:'application/json' }), filename);
+}
+
+function downloadBlob(blob, filename) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+function readJSON(file, cb) {
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try { cb(JSON.parse(ev.target.result)); }
+    catch { showToast('Erro ao ler o arquivo JSON.','error'); }
+  };
+  reader.readAsText(file);
+}
+
+// ═══════════════════════════════════════════════════════
+// MODAIS
+// ═══════════════════════════════════════════════════════
+function openModal(id)  { document.getElementById(id)?.classList.add('open'); }
+function closeModal(id) { document.getElementById(id)?.classList.remove('open'); }
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.overlay').forEach(o => {
+    o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
+  });
+});
+
+// ═══════════════════════════════════════════════════════
+// CRUD ESTABELECIMENTOS
+// ═══════════════════════════════════════════════════════
+function refreshAllCategoryDropdowns() {
+  const cats   = [...new Set(DADOS.map(r => r.categoria).filter(Boolean))].sort();
+  const catSel = document.getElementById('filterCategoria');
+  if (!catSel) return;
+  const curVal = catSel.value;
+  catSel.innerHTML = '<option value="">Todas as categorias</option>' +
+    cats.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
+  catSel.value = curVal;
+
+  // Filtro de categoria na aba fiscalização
+  const ffCat = document.getElementById('fiscEstabFilterCategoria');
+  if (ffCat) {
+    const cur = ffCat.value;
+    ffCat.innerHTML = '<option value="">Todas as categorias</option>' +
+      cats.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
+    ffCat.value = cur;
+  }
+}
+
+function initCatDatalist() {
+  const cats = [...new Set(DADOS.map(r => r.categoria).filter(Boolean))].sort();
+  const dl   = document.getElementById('catList');
+  if (dl) dl.innerHTML = cats.map(c => `<option value="${esc(c)}">`).join('');
+}
+
+function refreshAfterChange() {
+  updateTopBadges();
+  const activeCount = DADOS.filter(r => !isDisabled(r.id)).length;
+  const el = document.getElementById('statTotal');
+  if (el) el.textContent = activeCount;
+  if (currentPage==='estabelecimentos') renderTable();
+  if (currentPage==='inativos')         renderInativos();
+  if (currentPage==='dashboard')        renderDashboard();
+  if (currentPage==='fiscalizacao')     renderFiscalizacoes();
+  if (currentPage==='configuracoes')    updateConfigStats();
+}
+
+function openAdd() {
+  currentEditId = null;
+  document.getElementById('estabModalTitle').textContent = '＋ Novo Estabelecimento';
+  document.getElementById('estabModalSub').textContent   = 'Preencha os dados do novo estabelecimento';
+  clearEstabForm();
+  openModal('modalEstab');
+}
+
+function openEdit(id) {
+  const r = DADOS.find(d => d.id === id);
+  if (!r) return;
+  currentEditId = id;
+  document.getElementById('estabModalTitle').textContent = '✏️ Editar Estabelecimento';
+  document.getElementById('estabModalSub').textContent   = r.nome_fantasia;
+  document.getElementById('estNome').value      = r.nome_fantasia||'';
+  document.getElementById('estRazao').value     = r.razao_social||'';
+  document.getElementById('estEndereco').value  = r.endereco||'';
+  document.getElementById('estBairro').value    = r.bairro||'';
+  document.getElementById('estCategoria').value = r.categoria||'';
+  document.getElementById('estAtividade').value = r.tipo_atividade||'';
+  document.getElementById('estCnae').value      = r.cnae||'';
+  document.getElementById('estRisco').value     = r.classe_risco||'';
+  document.getElementById('estLicenca').value   = r.ultimo_licenciamento?.slice(0,10)||'';
+  document.getElementById('estOrgao').value     = r.orgao_licenciador||'';
+  openModal('modalEstab');
+}
+
+function clearEstabForm() {
+  ['estNome','estRazao','estEndereco','estCategoria','estAtividade','estCnae','estLicenca','estOrgao'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  document.getElementById('estBairro').value = '';
+  document.getElementById('estRisco').value  = '';
+}
+
+function saveEstab() {
+  const nome   = document.getElementById('estNome').value.trim();
+  const bairro = document.getElementById('estBairro').value;
+  if (!nome)   { showToast('Informe o Nome Fantasia!','error'); return; }
+  if (!bairro) { showToast('Selecione a Localidade!','error'); return; }
+  const payload = {
+    nome_fantasia:        nome,
+    razao_social:         document.getElementById('estRazao').value.trim(),
+    endereco:             document.getElementById('estEndereco').value.trim(),
+    bairro,
+    categoria:            document.getElementById('estCategoria').value.trim().toUpperCase(),
+    tipo_atividade:       document.getElementById('estAtividade').value.trim().toUpperCase(),
+    cnae:                 document.getElementById('estCnae').value.trim(),
+    classe_risco:         document.getElementById('estRisco').value,
+    ultimo_licenciamento: document.getElementById('estLicenca').value||'',
+    orgao_licenciador:    document.getElementById('estOrgao').value.trim(),
+  };
+  if (currentEditId !== null) {
+    const edited = getEditedMap();
+    edited[String(currentEditId)] = { ...edited[String(currentEditId)], ...payload };
+    saveEditedMap(edited);
+    showToast('Estabelecimento atualizado! ✅','success');
+  } else {
+    const custom = getCustom();
+    custom.push({ id: Date.now(), ...payload });
+    saveCustom(custom);
+    showToast('Estabelecimento adicionado! ✅','success');
+  }
+  rebuildDADOS();
+  closeModal('modalEstab');
+  refreshAllCategoryDropdowns();
+  refreshAfterChange();
+}
+
+function deleteEstab(id) {
+  const r = DADOS.find(d => d.id === id);
+  _pendingDeleteId = id;
+  document.getElementById('delNomeLabel').textContent = r ? r.nome_fantasia : 'ID '+id;
+  openModal('modalConfirmDel');
+}
+
+function confirmDelete() {
+  const id = _pendingDeleteId;
+  if (id === null) return;
+  if (_DADOS_ORIGINAL.some(r => r.id === id)) {
+    const deleted = getDeletedIds();
+    if (!deleted.includes(id)) { deleted.push(id); saveDeletedIds(deleted); }
+    const edited = getEditedMap();
+    delete edited[String(id)];
+    saveEditedMap(edited);
+  } else {
+    saveCustom(getCustom().filter(r => r.id !== id));
+  }
+  const ins = getInspections();
+  delete ins[insKey(id)];
+  saveInspections(ins);
+  rebuildDADOS();
+  closeModal('modalConfirmDel');
+  showToast('Estabelecimento excluído.','success');
+  refreshAfterChange();
+  _pendingDeleteId = null;
+}
+
+// ═══════════════════════════════════════════════════════
+// BOOT
+// ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
+// AUTH — LOGIN / LOGOUT
+// ═══════════════════════════════════════════════════════
+async function doLogin() {
+  const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+  const senha  = document.getElementById('loginSenha').value;
+  const errEl  = document.getElementById('loginErr');
+  const btn    = document.getElementById('loginBtn');
+  errEl.style.display = 'none';
+  if (!email || !senha) { errEl.textContent='Preencha e-mail e senha.'; errEl.style.display='block'; return; }
+  btn.disabled = true; btn.textContent = 'Verificando...';
+  try {
+    // Query Firestore for user
+    const snap = await _USERS_REF.where('email','==',email).limit(1).get();
+    if (snap.empty) {
+      errEl.textContent = 'E-mail ou senha incorretos.';
+      errEl.style.display = 'block';
+      btn.disabled = false; btn.textContent = 'Entrar';
+      return;
+    }
+    const doc = snap.docs[0];
+    const data = doc.data();
+    if (data.senha !== senha) {
+      errEl.textContent = 'E-mail ou senha incorretos.';
+      errEl.style.display = 'block';
+      btn.disabled = false; btn.textContent = 'Entrar';
+      return;
+    }
+    // Success
+    _currentUser = { uid: doc.id, email: data.email, role: data.role, profile: data.profile || null };
+    try { sessionStorage.setItem('visa_session', JSON.stringify(_currentUser)); } catch(e) {}
+    btn.textContent = 'Entrando...';
+    await boot(); // re-run boot with user set
+  } catch(err) {
+    errEl.textContent = 'Erro de conexão: ' + err.message;
+    errEl.style.display = 'block';
+    btn.disabled = false; btn.textContent = 'Entrar';
+  }
+}
+
+function doLogout() {
+  if (!confirm('Deseja sair do sistema?')) return;
+  _currentUser = null;
+  try { sessionStorage.removeItem('visa_session'); } catch(e) {}
+  document.getElementById('loginEmail').value = '';
+  document.getElementById('loginSenha').value = '';
+  document.getElementById('loginErr').style.display = 'none';
+  document.getElementById('loginOverlay').style.display = 'flex';
+  document.getElementById('loginBtn').disabled = false;
+  document.getElementById('loginBtn').textContent = 'Entrar';
+  // Hide main UI
+  document.getElementById('loadingOverlay').style.display = 'none';
+}
+
+function applySidebarRole() {
+  if (!_currentUser) return;
+  const isFiscal = _currentUser.role === 'fiscal';
+  // Update sidebar user info
+  const displayName = _currentUser.profile?.nome || _currentUser.email.split('@')[0].toUpperCase();
+  document.getElementById('sidebarUserName').textContent = displayName;
+  document.getElementById('sidebarUserRole').textContent = isFiscal ? '🔍 Fiscal' : '🛡️ Administrativo';
+  document.getElementById('sidebarAvatar').textContent = isFiscal ? '🔍' : '🛡️';
+
+  if (isFiscal) {
+    // Ocultar seção e itens do admin
+    ['dashboard','estabelecimentos','inativos','configuracoes'].forEach(pg => {
+      const btn = document.querySelector(`.nav-item[data-page="${pg}"]`);
+      if (btn) btn.style.display = 'none';
+    });
+    // Ocultar o item genérico de fiscalizacao (será substituído pelo fiscal)
+    const fiscBtn = document.querySelector('.nav-item[data-page="fiscalizacao"]:not(#navFiscRegistro)');
+    if (fiscBtn) fiscBtn.style.display = 'none';
+    // Ocultar rótulo "Menu Principal" e "Sistema"
+    const secMain = document.getElementById('navSectionMenuPrincipal');
+    if (secMain) secMain.style.display = 'none';
+    const secSistema = document.getElementById('navSectionSistema');
+    if (secSistema) secSistema.style.display = 'none';
+    // Mostrar itens exclusivos do fiscal
+    ['navSectionFiscal','navFiscRegistro','navFiscEstabs','navMeuCadastro'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = '';
+    });
+    // Ocultar seção "Estabelecimentos para Fiscalizar" na página de fiscalizacao (já removida)
+    const estabSec = document.getElementById('fiscEstabSection');
+    if (estabSec) estabSec.style.display = 'none';
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// FISCAL PROFILE SETUP
+// ═══════════════════════════════════════════════════════
+function openFiscalSetup(isEdit) {
+  const modal = document.getElementById('modalFiscalSetup');
+  const closeBtn = document.getElementById('fiscalSetupClose');
+  const cancelBtn = document.getElementById('fiscalSetupCancelBtn');
+  const noteEl = document.getElementById('fsFirstAccessNote');
+  const titleEl = document.getElementById('fiscalSetupTitle');
+  const subEl = document.getElementById('fiscalSetupSub');
+
+  if (isEdit) {
+    titleEl.textContent = '✏️ Editar Meu Cadastro';
+    subEl.textContent = 'Atualize seus dados de fiscal';
+    closeBtn.style.display = 'block';
+    cancelBtn.style.display = 'block';
+    noteEl.style.display = 'none';
+  } else {
+    titleEl.textContent = '👤 Configure Seu Cadastro';
+    subEl.textContent = 'Primeiro acesso — configure seus dados para continuar';
+    closeBtn.style.display = 'none';
+    cancelBtn.style.display = 'none';
+    noteEl.style.display = 'block';
+  }
+
+  // Fill existing data if editing
+  const prof = _currentUser?.profile || {};
+  document.getElementById('fsNome').value      = prof.nome || '';
+  document.getElementById('fsMatricula').value = prof.matricula || '';
+  document.getElementById('fsTelefone').value  = prof.telefone || '';
+
+  // Populate equipe dropdown
+  const sel = document.getElementById('fsEquipe');
+  const agents = getAgents();
+  sel.innerHTML = '<option value="">Sem equipe vinculada</option>' +
+    agents.map(a => `<option value="${esc(a.name)}"${a.name===prof.equipe?' selected':''}>${esc(a.name)}</option>`).join('');
+
+  modal.classList.add('open');
+}
+
+function closeFiscalSetup() {
+  document.getElementById('modalFiscalSetup').classList.remove('open');
+}
+
+async function saveFiscalProfile() {
+  const nome      = document.getElementById('fsNome').value.trim().toUpperCase();
+  const matricula = document.getElementById('fsMatricula').value.trim().toUpperCase();
+  const telefone  = document.getElementById('fsTelefone').value.trim();
+  const equipe    = document.getElementById('fsEquipe').value;
+  if (!nome)      { showToast('Informe seu nome completo!','error'); return; }
+  if (!matricula) { showToast('Informe sua matrícula!','error'); return; }
+
+  const profile = { nome, matricula, telefone, equipe, configured: true };
+  _currentUser.profile = profile;
+  try { sessionStorage.setItem('visa_session', JSON.stringify(_currentUser)); } catch(e) {}
+
+  // Persist in Firestore
+  try {
+    await _USERS_REF.doc(_currentUser.uid).update({ profile });
+  } catch(err) { console.warn('Erro ao salvar perfil:', err); }
+
+  closeFiscalSetup();
+  updateFiscalProfileDisplay();
+  applySidebarRole(); // update display name
+  showToast('Cadastro salvo com sucesso! ✅','success');
+}
+
+function updateFiscalProfileDisplay() {
+  if (!_currentUser || _currentUser.role !== 'fiscal') return;
+  const prof = _currentUser.profile || {};
+  const el = (id, val) => { const e=document.getElementById(id); if(e) e.textContent=val||'—'; };
+  el('pfNome',      prof.nome);
+  el('pfMatricula', prof.matricula);
+  el('pfTelefone',  prof.telefone);
+  el('pfEquipe',    prof.equipe || 'Sem equipe vinculada');
+  // Also update sidebar name
+  const nameEl = document.getElementById('sidebarUserName');
+  if (nameEl && prof.nome) nameEl.textContent = prof.nome;
+}
+
+// ═══════════════════════════════════════════════════════
+// AUTO-UPPERCASE — ALL FORM INPUTS
+// ═══════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  // IDs that should NOT be uppercased
+  const skipIds = new Set(['estCnae','estLicenca','inspDate','editFiscDate','loginEmail','loginSenha','fsTelefone']);
+
+  function applyUppercase(el) {
+    if (!el || skipIds.has(el.id)) return;
+    if (el.type === 'date' || el.type === 'email' || el.type === 'password' || el.type === 'tel') return;
+    if (el.tagName === 'SELECT') return;
+    const pos = el.selectionStart;
+    el.value = el.value.toUpperCase();
+    try { el.setSelectionRange(pos, pos); } catch(e) {}
+  }
+
+  document.addEventListener('input', e => {
+    const el = e.target;
+    if (el.classList.contains('form-input') || el.classList.contains('auto-upper') ||
+        el.classList.contains('search-input') || el.id === 'newBairroName' ||
+        el.id === 'newAgentName' || el.id === 'newAgentRole') {
+      applyUppercase(el);
+    }
+  });
+});
+
+// ═══════════════════════════════════════════════════════
+// ALTERAR SENHA DO USUÁRIO
+// ═══════════════════════════════════════════════════════
+async function changeUserPassword(newPassId, confirmId) {
+  const newPass = (document.getElementById(newPassId)?.value || '').trim();
+  const confirm = (document.getElementById(confirmId)?.value || '').trim();
+  if (!newPass || newPass.length < 6) {
+    showToast('A senha deve ter no mínimo 6 caracteres!', 'error');
+    return;
+  }
+  if (newPass !== confirm) {
+    showToast('As senhas não coincidem!', 'error');
+    return;
+  }
+  try {
+    const user = _fbAuth.currentUser;
+    if (!user) { showToast('Usuário não autenticado!', 'error'); return; }
+    await user.updatePassword(newPass);
+    document.getElementById(newPassId).value = '';
+    document.getElementById(confirmId).value = '';
+    showToast('Senha alterada com sucesso! ✅', 'success');
+  } catch (err) {
+    if (err.code === 'auth/requires-recent-login') {
+      showToast('Por segurança, faça login novamente para alterar a senha.', 'error');
+    } else {
+      showToast('Erro ao alterar senha: ' + (err.message || err.code), 'error');
+    }
+  }
+}
+
+async function boot() {
+  // If not logged in, show login screen and wait
+  if (!_currentUser) {
+    document.getElementById('loginOverlay').style.display = 'flex';
+    return; // boot() will be re-called after login
+  }
+  document.getElementById('loginOverlay').style.display = 'none';
+  applySidebarRole();
+  const loadEl = document.getElementById('loadingOverlay');
+  if (loadEl) loadEl.style.display = 'flex';
+
+  try {
+    const snap = await _STATE_REF.get();
+    if (snap.exists) {
+      const d = snap.data();
+      if (d.inspections) _fbCache.inspections = d.inspections;
+      if (d.agents)      _fbCache.agents      = d.agents;
+      if (d.config)      _fbCache.config      = d.config;
+      if (d.custom)      _fbCache.custom      = d.custom;
+      if (d.deleted)     _fbCache.deleted     = d.deleted;
+      if (d.disabled)    _fbCache.disabled    = d.disabled;
+      if (d.edited)      _fbCache.edited      = d.edited;
+      if (d.bairros)     _fbCache.bairros     = d.bairros;
+    }
+  } catch(e) {
+    console.warn('Firestore state indisponível:', e);
+    showToast('⚠️ Sem conexão com a nuvem.','error');
+  }
+
+  // Carrega dados dos estabelecimentos inativos (coleção separada)
+  try {
+    const inativosSnap = await _INATIVOS_REF.get();
+    if (inativosSnap.exists) {
+      const id = inativosSnap.data();
+      if (Array.isArray(id.estabelecimentos)) _fbCache.inativos_data = id.estabelecimentos;
+    }
+  } catch(e) { console.warn('Erro ao carregar inativos_data:', e); }
+
+  let raw = [];
+  try {
+    const baseSnap = await _BASE_REF.get();
+    if (baseSnap.exists) {
+      const bd = baseSnap.data();
+      if (Array.isArray(bd.estabelecimentos)) raw = bd.estabelecimentos;
+    }
+  } catch(e) {
+    console.warn('Erro ao carregar dados base:', e);
+  }
+
+  _DADOS_ORIGINAL.length = 0;
+  raw.forEach(r => _DADOS_ORIGINAL.push(r));
+
+  if (loadEl) loadEl.style.display = 'none';
+
+
+  init();
+}
+
+function init() {
+  rebuildDADOS();
+  refreshAllCategoryDropdowns();
+  refreshAllBairroDropdowns();
+  initCatDatalist();
+  updateTopBadges();
+  // Route based on role
+  if (_currentUser && _currentUser.role === 'fiscal') {
+    navigate('fiscalizacao');
+    updateFiscalProfileDisplay();
+    if (!_currentUser.profile || !_currentUser.profile.configured) {
+      openFiscalSetup(false);
+    }
+  } else {
+    renderDashboard();
+  }
+}
+
+boot();
+</script>
+</body>
+</html>
